@@ -1,0 +1,66 @@
+/*
+ *  WiimoteTypes.h
+ *  WiimoteKit
+ *
+ *  Created by Jean-Daniel Dupas on 12/01/08.
+ *  Copyright 2008 Shadow Lab.. All rights reserved.
+ *
+ */
+
+/*!
+ @enum 
+ @abstract The extension plugged into the Wiimote
+ @constant kWKExtensionNone No extension
+ @constant kWKExtensionNunchuk Nunchuk extension
+ @constant kWKExtensionClassicController Classic Controller extension
+ */
+enum {
+	kWKExtensionNone              = 0,
+	kWKExtensionNunchuk           = 1,
+	kWKExtensionClassicController	= 2
+};
+typedef NSUInteger WKExtensionType;
+
+#pragma mark Base types
+typedef struct _WKAxisCalibration {
+	uint8_t max;
+	uint8_t min;
+	uint8_t center;
+} WKAxisCalibration;
+
+typedef struct _WKButtonCalibration {
+	uint8_t min;
+	uint8_t max;
+} WKButtonCalibration;
+
+#pragma mark Calibrations
+/*!
+ @struct 
+ @abstract Current state of the accelerometers
+ @field rawX Raw accelerometer data (Values range between 0 - 255).
+ @field rawY Raw accelerometer data (Values range between 0 - 255).
+ @field rawZ Raw accelerometer data (Values range between 0 - 255).
+ @field x Normalized accelerometer data.  Values range between 0 - ? 
+ @field y Normalized accelerometer data.  Values range between 0 - ? 
+ @field z Normalized accelerometer data.  Values range between 0 - ? 
+ */
+typedef struct _WKAccelerationState {
+	uint8_t rawX, rawY, rawZ;
+	CGFloat x, y, z;
+} WKAccelerationState;
+
+/*!
+ @struct
+ @abstract Accelerometer calibration information
+ @field x0 Zero point of accelerometer
+ @field y0 Zero point of accelerometer
+ @field z0 Zero point of accelerometer
+ @field xG Gravity at rest of accelerometer
+ @field yG Gravity at rest of accelerometer
+ @field zG Gravity at rest of accelerometer
+ */
+typedef struct _WKAccelerationCalibration {
+	uint8_t x0, y0, z0;
+	uint8_t xG, yG, zG;
+} WKAccelerationCalibration;
+
