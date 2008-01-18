@@ -12,6 +12,8 @@
 #import <WiimoteKit/WiiNunchuk.h>
 #import <WiimoteKit/WiiClassic.h>
 
+#import "WiiRemoteInternal.h"
+
 @implementation WKExtension
 
 + (id)extensionWithType:(WKExtensionType)aType {
