@@ -30,17 +30,6 @@ typedef NSUInteger WKAddressSpace;
 
 #define WII_DECRYPT(data) (((data ^ 0x17) + 0x17) & 0xFF)
 
-enum {
-	/* WiiRemote */
-	kWKWiiRemoteCalibrationRequest = 1,
-	/* Extension */
-	kWKExtensionTypeRequest,
-	kWKExtensionCalibrationRequest,
-	/* Mii */
-	kWKMiiDataRequest,
-};
-typedef NSUInteger WKReadRequest;
-
 // Wiimote output commands
 enum WKOutputReport {
 	WKOutputReportNone        = 0x00,
@@ -56,53 +45,54 @@ enum WKOutputReport {
 	WKOutputReportIRCamera2   = 0x1a, // 1 byte
 };
 
+// The report format in which the Wiimote should return data
+enum WKInputReport {
+	// Status report
+	kWKInputReportStatus    = 0x20, // 6 bytes
+	// Read data from memory location
+	kWKInputReportReadData  = 0x21, // 21 bytes
+	// Write status to memory location
+	kWKInputReportWriteData = 0x22, // 4 bytes
+	
+	kWKInputReportDefault                = 0x30, // 2 bytes. buttons only*
+	kWKInputReportAccelerometer          = 0x31, // 3 bytes*
+	kWKInputReportShortExtension         = 0x32, // 9 bytes
+	kWKInputReportAccelerometerIR        = 0x33, // 3 - 12 bytes*
+	kWKInputReportExtension              = 0x34, // 19 bytes*
+	kWKInputReportAccelerometerExtension = 0x35, // 3 - 16 bytes*
+	kWKInputReportIRExtension            = 0x36, // 10 - 9 bytes*
+	kWKInputReportAll                    = 0x37, // 3 - 10 - 6 bytes*
+	kWKInputReportLongExtension          = 0x3d, // 21 bytes. WARNING, this report does not include buttons.
+	/* interleaved */
+	kWKInputReportAllInterleavedLow      = 0x3e, // 1 - 18 bytes
+	kWKInputReportAllInterleavedHigh     = 0x3f, // 1 - 18 bytes
+};
+
 @interface WiiRemote (WiiRemoteInternal)
 
-- (IOReturn)initializeExtension;
+/* Comands */
+- (IOReturn)sendCommand:(const uint8_t *)cmd length:(size_t)length;
 
+/* I/O */
+- (IOReturn)readDataAtAddress:(user_addr_t)address space:(WKAddressSpace)space length:(size_t)length handler:(SEL)handler;
+- (IOReturn)writeData:(const uint8_t *)data length:(size_t)length atAddress:(user_addr_t)address space:(WKAddressSpace)space next:(SEL)next;
+
+/* IRCamera */
+- (WKIRMode)irMode;
+- (IOReturn)setIrMode:(WKIRMode)aMode;
+
+/* Extensions */
+- (IOReturn)initializeExtension;
 - (void)setExtension:(WKExtension *)anExtension;
 - (void)setExtensionType:(WKExtensionType)extensionType;
 
-- (IOReturn)sendCommand:(const uint8_t *)cmd length:(size_t)length context:(void *)ctxt;
+#pragma mark Query Status
+- (IOReturn)refreshStatus;
+- (IOReturn)refreshReportMode;
+- (IOReturn)refreshCalibration;
+- (IOReturn)refreshExtensionCalibration;
 
+#pragma mark Callbacks
 - (void)didReceiveAck:(const uint8_t *)ack;
-- (IOReturn)writeData:(const uint8_t *)data length:(size_t)length 
-						atAddress:(user_addr_t)address space:(WKAddressSpace)space context:(void *)ctxt;
-
-- (IOReturn)readDataAtAddress:(user_addr_t)address space:(WKAddressSpace)space length:(size_t)length request:(NSUInteger)request;
 
 @end
-
-static __inline__ 
-NSUInteger __WKReadRequestCount(NSUInteger stack) {
-	return stack & 0xf;
-}
-
-static __inline__ 
-NSUInteger __WKReadRequestPush(NSUInteger stack, WKReadRequest request) {
-	NSCParameterAssert(request <= 0x0f);
-	NSUInteger count = __WKReadRequestCount(stack);
-	if (count == (sizeof(NSUInteger) * 2 - 1))
-		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"read stack overflow" userInfo:nil];
-	
-	NSUInteger shift = (count + 1) * 4;
-	WKLog(@"=> Push read request: %u", request);
-	
-	stack &= ~((0xf << shift) | 0xf);
-	stack |= request << shift | (count + 1);
-	return stack;
-}
-
-static __inline__ 
-NSUInteger __WKReadRequestPop(NSUInteger stack, WKReadRequest *request) {
-	NSCParameterAssert(request);
-	NSUInteger count = __WKReadRequestCount(stack);
-	if (0 == count)
-		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"read stack underflow" userInfo:nil];
-	
-	*request = (stack & 0xf0) >> 4;
-	WKLog(@"<= Pop read request: %u", *request);
-	
-	stack &= ~0xf0;
-	return (stack >> 4) | (count - 1);
-}

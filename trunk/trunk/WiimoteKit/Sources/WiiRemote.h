@@ -83,7 +83,7 @@ typedef struct _WKIRState {
 @interface WiiRemote : NSObject {
 @private
 	// Current state of IR sensors
-	WKIRState irState;
+	WKIRState wk_irState;
 	// Current state of accelerometers
 	WKAccelerationState wk_accState;
 	// Current calibration information
@@ -114,10 +114,13 @@ typedef struct _WKIRState {
 		unsigned int initializing:1;
 	} wk_wiiFlags;
 	
-	NSUInteger wk_requests;
 	NSMutableData *wk_buffer; /* download buffer */
 	uint8_t wk_interleaved[39]; /* interleaved buffer */
 	WKConnection *wk_connection; /* bluetooth HID connection */
+	
+	/* read/write request serialization */
+	CFMutableArrayRef wk_rRequests;
+	CFMutableArrayRef wk_wRequests;
 }
 
 #pragma mark Device
@@ -129,61 +132,49 @@ typedef struct _WKIRState {
 - (WKConnection *)connection;
 
 #pragma mark Wiimote Status
+- (BOOL)isContinuous;
+- (void)setContinuous:(BOOL)value;
+
+- (BOOL)acceptsIRCameraEvents;
+- (void)setAcceptsIRCameraEvents:(BOOL)flag;
+
+- (BOOL)acceptsAccelerometerEvents;
+- (void)setAcceptsAccelerometerEvents:(BOOL)flag;
+
+@end
+
+@interface WiiRemote (WiiRemoteStatus)
 
 - (WKLEDState)leds;
-- (BOOL)isIREnabled;
+- (void)setLeds:(WKLEDState)leds;
+
 - (BOOL)isRumbleEnabled;
+- (void)setRumbleEnabled:(BOOL)rumble;
 
-- (BOOL)isContinuous;
-- (BOOL)acceptsAccelerometerEvents;
-
-#pragma mark -
+/* read only */
 /*!
  @method
  @result Returns a number from 0.0 through 1.0 (1.0 mean battery full)
  */
 - (CGFloat)battery;
-
 - (WKExtension *)extension;
 
 @end
 
-@interface WiiRemote (WKControlLink)
-#pragma mark Send Command
+@protocol WiiRemoteSpakerDataSource
+/* this delaration is just a remainder */
+- (NSUInteger)getPCMData:(uint8_t *)buffer length:(size_t)length;
 
-- (IOReturn)setLeds:(WKLEDState)leds;
-- (IOReturn)setIREnabled:(BOOL)enabled;
-- (IOReturn)setRumbleEnabled:(BOOL)rumble;
+@end
 
-- (void)setContinuous:(BOOL)value;
-- (void)setAcceptsAccelerometerEvents:(BOOL)flag;
+@interface WiiRemote (WiiRemoteSpeaker)
 
-#pragma mark Query Status
-- (IOReturn)refreshStatus;
-- (IOReturn)refreshCalibration;
-- (IOReturn)refreshExtensionCalibration;
+- (BOOL)isSpeakerEnabled;
+- (void)setSpeakerEnabled:(BOOL)flag;
 
+- (BOOL)isSpeakerMuted;
+- (void)setSpeakerMuted:(BOOL)flag;
 
-- (WKIRMode)irMode;
-- (IOReturn)updateReportMode;
-- (IOReturn)setIrMode:(WKIRMode)aMode;
-
-///*!
-// @method
-// @abstract Send a "read data or register" from Wiimote request.
-// @param address Address to read.
-// @param size Length to read
-// @result Returns kIOReturnSuccess if ok.
-// */
-//- (IOReturn)readDataFromWiiRemoteMemory:(user_addr_t)address length:(uint16_t)size;
-///*!
-// @method 
-// @abstract Write a byte array to a specified address.
-// @param data Data buffer.
-// @param size Length of buffer.
-// @param address Address to write.
-// @result Returns kIOReturnSuccess if ok.
-// */
-//- (IOReturn)writeData:(const uint8_t *)data length:(size_t)size inWiiRemoteMemory:(user_addr_t)address;
+- (void)setSpeakerDataSource:(id<WiiRemoteSpakerDataSource>)source;
 
 @end

@@ -51,7 +51,7 @@ int main(int argc, const char **argv) {
 }
 - (IBAction)infrared:(id)sender {
 	//[wk_wiimote setContinuous:![wk_wiimote isIrEnabled]];
-	[wk_wiimote setIREnabled:![wk_wiimote isIREnabled]];
+	[wk_wiimote setAcceptsIRCameraEvents:![wk_wiimote acceptsIRCameraEvents]];
 }
 - (IBAction)accelerometer:(id)sender {
 	[wk_wiimote setAcceptsAccelerometerEvents:![wk_wiimote acceptsAccelerometerEvents]];

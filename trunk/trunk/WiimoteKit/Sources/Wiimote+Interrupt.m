@@ -12,33 +12,10 @@
 #import <WiimoteKit/WKExtension.h>
 #import <WiimoteKit/WKConnection.h>
 
-// The report format in which the Wiimote should return data
-enum WKInputReport {
-	// Status report
-	kWKInputReportStatus    = 0x20, // 6 bytes
-	// Read data from memory location
-	kWKInputReportReadData  = 0x21, // 21 bytes
-	// Write status to memory location
-	kWKInputReportWriteData = 0x22, // 4 bytes
-	
-	kWKInputReportDefault                = 0x30, // 2 bytes. buttons only
-	kWKInputReportAccelerometer          = 0x31, // 3 bytes
-	kWKInputReportShortExtension         = 0x32, // 9 bytes
-	kWKInputReportAccelerometerIR        = 0x33, // 3 - 12 bytes
-	kWKInputReportExtension              = 0x34, // 19 bytes
-	kWKInputReportAccelerometerExtension = 0x35, // 3 - 16 bytes
-	kWKInputReportIRExtension            = 0x36, // 10 - 9 bytes
-	kWKInputReportAll                    = 0x37, // 3 - 10 - 6 bytes
-	kWKInputReportLongExtension          = 0x3d, // 21 bytes. WARNING, this report does not include buttons.
-	/* interleaved */
-	kWKInputReportAllInterleavedLow      = 0x3e, // 1 - 18 bytes
-	kWKInputReportAllInterleavedHigh     = 0x3f, // 1 - 18 bytes
-};
-
 #define kWiiIRPixelsWidth 1024.0
 #define kWiiIRPixelsHeight 768.0
 
-@interface WiiRemote (WKConnectionParser)
+@interface WiiRemote (WiiRemoteInputParser)
 - (void)parserWriteAck:(const uint8_t *)data length:(size_t)length;
 - (void)parseButtons:(const uint8_t *)data length:(size_t)length;
 - (void)parseStatus:(const uint8_t *)data length:(size_t)length;
@@ -50,15 +27,24 @@ enum WKInputReport {
 
 @end
 
-@implementation WiiRemote (WKConnectionParser)
+@implementation WiiRemote (WiiRemoteInputParser)
 
 - (void)parseButtons:(const uint8_t *)data length:(size_t)length {
 	NSParameterAssert(length >= 2);
 	WKWiiRemoteButtonsState state = OSReadBigInt16(data, 0) & kWKWiiRemoteButtonsMask;
 	if (state != wk_wiiFlags.remoteButtons) {
+		for (NSUInteger idx = 0; idx < 16; idx++) {
+			NSUInteger flag = 1 << idx;
+			if (flag & kWKWiiRemoteButtonsMask) {
+				/* xor */
+				bool before = wk_wiiFlags.remoteButtons & flag;
+				bool after = state & flag;
+				if ((before && !after) || (!before && after)) {
+					WKLog(@"Button %@: %#x", after ? @"up" : @"down", flag);
+				}
+			}
+		}
 		wk_wiiFlags.remoteButtons = state;
-		// TODO: compute delta
-		WKLog(@"TODO: Notify buttons changed: %x", wk_wiiFlags.remoteButtons);
 	}
 }
 
@@ -101,63 +87,20 @@ enum WKInputReport {
 	}
 }
 
-- (void)parseCalibration:(const uint8_t *)memory length:(size_t)length {
-	wk_accCalib.x0 = memory[0] << 1;
-	wk_accCalib.y0 = memory[1] << 1;
-	wk_accCalib.z0 = memory[2] << 1;
-	wk_accCalib.xG = memory[4] << 1;
-	wk_accCalib.yG = memory[5] << 1;
-	wk_accCalib.zG = memory[6] << 1;
-}
-
 - (void)didReceiveData:(const uint8_t *)data length:(size_t)length {
-	WKReadRequest request;
-	wk_requests = __WKReadRequestPop(wk_requests, &request);
-	switch (request) {
-		case kWKExtensionTypeRequest: { // extension type
-			uint16_t wiitype = OSReadBigInt16(data, 0);
-			WKExtensionType type = kWKExtensionNone;
-			/* set extension type */
-			switch (wiitype) {
-				case 0xfefe:
-					type = kWKExtensionNunchuk;
-					break;
-				case 0xfdfd:
-					type = kWKExtensionClassicController;
-					break;
-				case 0xffff:
-					WKLog(@"TODO: report extension error: unplug and try again");
-					break;
-				default:
-					WKLog(@"TODO: report unsupported extension");
-					break;
-			}
-			[self setExtensionType:type];
-			wk_wiiFlags.initializing = 0;
-		}
-			break;
-		case kWKWiiRemoteCalibrationRequest:
-			// read wiimote calibration
-			[self parseCalibration:data length:length];
-			break;
-		case kWKExtensionCalibrationRequest:
-			// extension request
-			[[self extension] parseCalibration:data length:length];
-			break;
-		case kWKMiiDataRequest:
-			// mii
-			break;
-		default:
-			WKLog(@"receive data but does not waiting something");
-	}
+	NSAssert(wk_rRequests && CFArrayGetCount(wk_rRequests) > 0, @"inconsistent request count");
+	SEL handler = (SEL)CFArrayGetValueAtIndex(wk_rRequests, 0);
+	CFArrayRemoveValueAtIndex(wk_rRequests, 0);
+	if (handler)
+		(void)objc_msgSend(self, handler, data, length);
+	else
+		WKLog(@"receive data but does not waiting something");
 }
 
 - (void)parseRead:(const uint8_t *)data length:(size_t)length {
 	NSParameterAssert(length == 19);
-	
 	// user_addr_t addr = OSReadBigInt16(data, 1);
 	// const uint8_t *memory = data + 3;
-	
 	if(data[0] & 0x08) {
 		WKLog(@"Error reading data from Wiimote: Bytes do not exist.");
 	} else if(data[0] & 0x07) {
@@ -236,6 +179,62 @@ enum WKInputReport {
 
 - (void)parseIRCamera:(const uint8_t *)data range:(NSRange)range {
 	NSLog(@"%@%lu", NSStringFromSelector(_cmd), (long)range.length);
+	wk_irState.sensors[0].rawX = data[range.location]  | ((data[range.location + 2] >> 4) & 0x03) << 8;
+	wk_irState.sensors[0].rawY = data[range.location + 1]  | ((data[range.location + 2] >> 6) & 0x03) << 8;
+	
+	switch(range.length) {
+		case 10:
+			wk_irState.sensors[1].rawX = data[range.location + 3]  | ((data[range.location + 2] >> 0) & 0x03) << 8;
+			wk_irState.sensors[1].rawY = data[range.location + 4] | ((data[range.location + 2] >> 2) & 0x03) << 8;
+			
+			wk_irState.sensors[0].size = 0x00;
+			wk_irState.sensors[1].size = 0x00;
+			
+			wk_irState.sensors[0].found = !(data[range.location] == 0xff && data[range.location + 1] == 0xff);
+			wk_irState.sensors[1].found = !(data[range.location + 3] == 0xff && data[range.location + 4] == 0xff);
+			break;
+		case 12:
+			wk_irState.sensors[1].rawX = data[9]  | ((data[11] >> 4) & 0x03) << 8;
+			wk_irState.sensors[1].rawY = data[10] | ((data[11] >> 6) & 0x03) << 8;
+			
+			wk_irState.sensors[0].size = data[8] & 0x0f;
+			wk_irState.sensors[1].size = data[11] & 0x0f;
+			
+			wk_irState.sensors[0].found = !(data[6] == 0xff && data[7] == 0xff && data[8] == 0xff);
+			wk_irState.sensors[1].found = !(data[9] == 0xff && data[10] == 0xff && data[11] == 0xff);
+			
+			//a guess based on the structure of the 1st 2 dots
+			wk_irState.sensors[2].rawX = data[12] | ((data[14] >> 4) & 0x03) << 8;
+			wk_irState.sensors[2].rawY = data[13] | ((data[14] >> 6) & 0x03) << 8;
+			wk_irState.sensors[2].size = data[14] & 0x0f;
+			wk_irState.sensors[2].found = !(data[12] == 0xff && data[13] == 0xff && data[14] == 0xff);
+			
+			wk_irState.sensors[3].rawX = data[15] | ((data[17] >> 4) & 0x03) << 8;
+			wk_irState.sensors[3].rawY = data[16] | ((data[17] >> 6) & 0x03) << 8;
+			wk_irState.sensors[3].size = data[17] & 0x0f;
+			wk_irState.sensors[3].found = !(data[15] == 0xff && data[16] == 0xff && data[17] == 0xff);
+			
+			break;
+		default:
+			WKLog(@"Unsupported IR Camera mode: %u bytes report", range.length);
+			return;
+	}
+	
+	for (NSUInteger idx = 0; idx < 4; idx++) {
+		wk_irState.sensors[idx].x = wk_irState.sensors[idx].rawX / 1023.5;
+		wk_irState.sensors[idx].y = wk_irState.sensors[idx].rawY / 767.5;
+	}
+
+	
+	if(wk_irState.sensors[0].found && wk_irState.sensors[1].found) {
+		wk_irState.rawX = (wk_irState.sensors[0].rawX + wk_irState.sensors[1].rawX) / 2;
+		wk_irState.rawY = (wk_irState.sensors[0].rawY + wk_irState.sensors[1].rawY) / 2;
+		
+		wk_irState.x = (wk_irState.sensors[0].x + wk_irState.sensors[1].x) / 2.;
+		wk_irState.y = (wk_irState.sensors[0].y + wk_irState.sensors[1].y) / 2.;
+	} else {
+		wk_irState.x = wk_irState.y = 0;
+	}
 }
 
 - (void)parserWriteAck:(const uint8_t *)data length:(size_t)length {
@@ -274,8 +273,8 @@ enum WKInputReport {
 }
 
 - (void)connection:(WKConnection *)aConnection didReceiveData:(uint8_t *)data length:(size_t)length {
-	// NSLog(@"%@: %@", NSStringFromSelector(_cmd), [NSData dataWithBytesNoCopy:data length:length freeWhenDone:NO]);
-	printf("-\n");
+	//NSLog(@"%@: %@", NSStringFromSelector(_cmd), [NSData dataWithBytesNoCopy:data length:length freeWhenDone:NO]);
+	// printf("-\n");
 	
 	wk_wiiFlags.inTransaction = 1;
 	NSUInteger type = data[0];
@@ -361,7 +360,7 @@ enum WKInputReport {
 	}
 	if (wk_wiiFlags.reportMode) {
 		wk_wiiFlags.reportMode = 0;
-		[self updateReportMode];
+		[self refreshReportMode];
 	}
 }
 
