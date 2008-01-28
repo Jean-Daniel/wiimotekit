@@ -73,8 +73,8 @@ typedef struct _WKIRState {
 	struct {
 		BOOL found; // IR sensor seen
 		uint8_t size; // Size of IR Sensor.  Values range from 0 - 15
-		uint16_t rawX, rawY; // X Values range between 0 - 1023, Y Values range between 0 - 767.
 		CGFloat x, y; // Normalized value of X/Y-axis on individual sensor.  Values range between 0.0 - 1.0
+		uint16_t rawX, rawY; // X Values range between 0 - 1023, Y Values range between 0 - 767.
 	} sensors[4];
 } WKIRState;
 
@@ -82,6 +82,7 @@ typedef struct _WKIRState {
 @class WKExtension, WKConnection;
 @interface WiiRemote : NSObject {
 @private
+	id wk_delegate;
 	// Current state of IR sensors
 	WKIRState wk_irState;
 	// Current state of accelerometers
@@ -94,8 +95,11 @@ typedef struct _WKIRState {
 	struct _wk_wiiFlags {
 		unsigned int leds:5; // Current state of LEDs
 		unsigned int rumble:1; // Current state of the force feedback
-		unsigned int speaker:1; // speaker is enabled ?
 		unsigned int battery:8; // Current battery level
+		
+		/* speaker */
+		unsigned int muted:1; // speaker is enabled ?
+		unsigned int speaker:1; // speaker is enabled ?
 		
 		unsigned int remoteButtons:16; /* wii remote buttons state */
 		
@@ -111,14 +115,19 @@ typedef struct _WKIRState {
 		/* download */
 		unsigned int expected:16;
 		/* race condition */
-		unsigned int initializing:1;
+		unsigned int connected:1;
+		// avoid double init
+		unsigned int irInit:1;
+		unsigned int irAbort:1;
+		unsigned int extInit:1;
+		unsigned int speakerInit:1; 
 	} wk_wiiFlags;
 	
 	NSMutableData *wk_buffer; /* download buffer */
 	uint8_t wk_interleaved[39]; /* interleaved buffer */
 	WKConnection *wk_connection; /* bluetooth HID connection */
 	
-	/* read/write request serialization */
+	/* read/write request queue */
 	CFMutableArrayRef wk_rRequests;
 	CFMutableArrayRef wk_wRequests;
 }
@@ -126,6 +135,10 @@ typedef struct _WKIRState {
 #pragma mark Device
 - (id)initWithDevice:(IOBluetoothDevice *)aDevice;
 
+- (id)delegate;
+- (void)setDelegate:(id)aDelegate;
+
+- (IOReturn)connect;
 - (BOOL)isConnected;
 
 - (NSString *)address;
@@ -163,7 +176,7 @@ typedef struct _WKIRState {
 
 @protocol WiiRemoteSpakerDataSource
 /* this delaration is just a remainder */
-- (NSUInteger)getPCMData:(uint8_t *)buffer length:(size_t)length;
+- (NSUInteger)wiiRemote:(WiiRemote *)aWiimote getPCMData:(uint8_t *)buffer length:(size_t)length;
 
 @end
 
@@ -177,4 +190,18 @@ typedef struct _WKIRState {
 
 - (void)setSpeakerDataSource:(id<WiiRemoteSpakerDataSource>)source;
 
+- (NSUInteger)speakerRate;
+
 @end
+
+@class WKEvent;
+@interface NSObject (WiiRemoteDelegate)
+
+- (void)wiimoteDidConnect:(WiiRemote *)aRemote;
+- (void)wiimoteDidDisconnect:(WiiRemote *)aRemote;
+
+- (void)wiimote:(WiiRemote *)aRemote sendEvent:(WKEvent *)anEvent;
+
+@end
+
+

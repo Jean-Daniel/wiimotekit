@@ -40,7 +40,7 @@
 				bool before = wk_wiiFlags.remoteButtons & flag;
 				bool after = state & flag;
 				if ((before && !after) || (!before && after)) {
-					WKLog(@"Button %@: %#x", after ? @"up" : @"down", flag);
+					[self sendButtonEvent:flag subtype:kWKEventWiimoteButton down:before];
 				}
 			}
 		}
@@ -63,7 +63,7 @@
 	bool speaker = (data[0] & 0x04) != 0;
 	if (speaker != wk_wiiFlags.speaker) {
 		wk_wiiFlags.speaker = speaker;
-		WKLog(@"TODO: Speaker status did change");
+		[self sendStatusEvent:wk_wiiFlags.speaker subtype:kWKStatusEventSpeaker];
 	}
 
 	bool continuous = (data[0] & 0x08) != 0;
@@ -76,19 +76,19 @@
 	WKLEDState state = (data[0] >> 4) & 0xf;
 	if (state != wk_wiiFlags.leds) {
 		wk_wiiFlags.leds = state;
-		WKLog(@"TODO: led status did change");
+		[self sendStatusEvent:wk_wiiFlags.leds subtype:kWKStatusEventLights];
 	}
 	
 	/* check battery level */
 	uint8_t battery = data[3];
 	if (battery != wk_wiiFlags.battery) {
 		wk_wiiFlags.battery = battery;
-		WKLog(@"TODO: Battery did change: %.0f%%", wk_wiiFlags.battery * 100. / 0xc0);
+		[self sendStatusEvent:wk_wiiFlags.battery subtype:kWKStatusEventBattery];
 	}
 }
 
 - (void)didReceiveData:(const uint8_t *)data length:(size_t)length {
-	NSAssert(wk_rRequests && CFArrayGetCount(wk_rRequests) > 0, @"inconsistent request count");
+	NSAssert(wk_rRequests && CFArrayGetCount(wk_rRequests) > 0, @"inconsistent request queue");
 	SEL handler = (SEL)CFArrayGetValueAtIndex(wk_rRequests, 0);
 	CFArrayRemoveValueAtIndex(wk_rRequests, 0);
 	if (handler)
@@ -128,33 +128,49 @@
 - (void)parseAccelerometer:(const uint8_t *)data range:(NSRange)range {
 	NSParameterAssert(range.length == 3);
 	
-	uint8_t rawx, rawy, rawz;
+	WKAccelerometerEventData event;
+	bzero(&event, sizeof(event));
 #if defined(NINE_BITS_ACCELEROMETER)
 	// cam: added 9th bit of resolution to the wii acceleration
 	// see http://www.wiili.org/index.php/Talk:Wiimote#Remaining_button_state_bits
 	uint16_t adjust = OSReadBigInt16(data, 0);
 	
-	rawx = (data[range.location] << 1) | (adjust & 0x0040) >> 6;
-	rawy = (data[range.location + 1] << 1) | (adjust & 0x2000) >> 13;
-	rawz = (data[range.location + 2] << 1) | (adjust & 0x4000) >> 14;
+	event.rawx = (data[range.location] << 1) | (adjust & 0x0040) >> 6;
+	event.rawy = (data[range.location + 1] << 1) | (adjust & 0x2000) >> 13;
+	event.rawz = (data[range.location + 2] << 1) | (adjust & 0x4000) >> 14;
 #else
-	rawx = data[range.location];
-	rawy = data[range.location + 1];
-	rawz = data[range.location + 2];	
+	event.rawx = data[range.location];
+	event.rawy = data[range.location + 1];
+	event.rawz = data[range.location + 2];	
 #endif
 	
-	if (rawx != wk_accState.rawX || rawx != wk_accState.rawX || rawx != wk_accState.rawX) {
-		wk_accState.rawX = rawx;
-		wk_accState.rawY = rawy;
-		wk_accState.rawZ = rawz;
-		
+	if (event.rawx != wk_accState.rawX || event.rawy != wk_accState.rawY || event.rawz != wk_accState.rawZ) {
+		/* delta */
+		event.rawdx = event.rawx - wk_accState.rawX;
+		event.rawdy = event.rawy - wk_accState.rawY;
+		event.rawdz = event.rawz - wk_accState.rawZ;
+	
 		/* compute calibrated values */
-		if (wk_accCalib.x0)
-			wk_accState.x = (CGFloat)(wk_accState.rawX - wk_accCalib.x0) / (wk_accCalib.xG - wk_accCalib.x0);
-		if (wk_accCalib.y0)
-			wk_accState.y = (CGFloat)(wk_accState.rawY - wk_accCalib.y0) / (wk_accCalib.yG - wk_accCalib.y0);
-		if (wk_accCalib.z0)
-			wk_accState.z = (CGFloat)(wk_accState.rawZ - wk_accCalib.z0) / (wk_accCalib.zG - wk_accCalib.z0);
+		if (wk_accCalib.x0) {
+			event.x = (CGFloat)(event.rawx - wk_accCalib.x0) / (wk_accCalib.xG - wk_accCalib.x0);
+			event.dx = event.x - wk_accState.x;
+		}
+		if (wk_accCalib.y0) {
+			event.y = (CGFloat)(event.rawy - wk_accCalib.y0) / (wk_accCalib.yG - wk_accCalib.y0);
+			event.dy = event.y - wk_accState.y;
+		}
+		if (wk_accCalib.z0) {
+			event.z = (CGFloat)(event.rawz - wk_accCalib.z0) / (wk_accCalib.zG - wk_accCalib.z0);
+			event.dz = event.z - wk_accState.z;
+		}
+		
+		wk_accState.x = event.x;
+		wk_accState.y = event.y;
+		wk_accState.z = event.z;
+		
+		wk_accState.rawX = event.rawx;
+		wk_accState.rawY = event.rawy;
+		wk_accState.rawZ = event.rawz;
 		
 		//		_lowZ = _lowZ * 0.9 + rawz * 0.1;
 		//		_lowX = _lowX * 0.9 + rawx * 0.1;
@@ -173,7 +189,7 @@
 		//				orientation = (_lowX > WIR_HALFRANGE) ? 3 : 1;
 		//		}
 		
-		WKLog(@"TODO: Wiimote position change");
+		[self sendAccelerometerEvent:&event subtype:kWKEventWiimoteAccelerometer];
 	}
 }
 

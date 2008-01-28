@@ -36,7 +36,7 @@
 	}
 	return self;
 }
-
+- (WiiRemote *)wiiRemote { return wk_remote; }
 - (void)setWiiRemote:(WiiRemote *)aRemote {
 	if (aRemote != wk_remote) {
 		wk_remote = aRemote;

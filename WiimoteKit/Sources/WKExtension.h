@@ -19,6 +19,7 @@
 
 - (WKExtensionType)type;
 /* auto-calibrate when attached to a remote */
+- (WiiRemote *)wiiRemote;
 - (void)setWiiRemote:(WiiRemote *)aRemote;
 
 - (void)parseStatus:(const uint8_t *)data range:(NSRange)aRange;

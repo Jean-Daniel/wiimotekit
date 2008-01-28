@@ -30,6 +30,8 @@
 			<string>ObjC</string>
 			<key>OUTLETS</key>
 			<dict>
+				<key>ibBattery</key>
+				<string>NSLevelIndicator</string>
 				<key>ibSearch</key>
 				<string>NSProgressIndicator</string>
 			</dict>

@@ -7,6 +7,7 @@
  *
  */
 
+#import <WiimoteKit/WKEvent.h>
 #import <WiimoteKit/WiiRemote.h>
 #import <WiimoteKit/WiimoteKit.h>
 
@@ -32,17 +33,18 @@ typedef NSUInteger WKAddressSpace;
 
 // Wiimote output commands
 enum WKOutputReport {
-	WKOutputReportNone        = 0x00,
-	//WKOutputReport???     = 0x10,
-	WKOutputReportLEDs        = 0x11, // 1 byte
-	WKOutputReportMode        = 0x12, // 2 bytes
-	WKOutputReportIRCamera    = 0x13, // 1 byte
-	WKOutputReportStatus      = 0x15, // 1 byte
-	WKOutputReportWriteMemory = 0x16, // 21 byte
-	WKOutputReportReadMemory  = 0x17, // 6 byte
-	WKOutputReportSpeaker     = 0x18, // 21 byte
-	WKOutputReportMuteSpeaker = 0x19, // 1
-	WKOutputReportIRCamera2   = 0x1a, // 1 byte
+	WKOutputReportNone          = 0x00,
+	//WKOutputReport???         = 0x10,
+	WKOutputReportLEDs          = 0x11, // 1 byte
+	WKOutputReportMode          = 0x12, // 2 bytes
+	WKOutputReportIRCamera      = 0x13, // 1 byte
+	WKOutputReportSpeakerStatus = 0x14, // 1 byte
+	WKOutputReportStatus        = 0x15, // 1 byte
+	WKOutputReportWriteMemory   = 0x16, // 21 byte
+	WKOutputReportReadMemory    = 0x17, // 6 byte
+	WKOutputReportSpeakerData   = 0x18, // 21 byte
+	WKOutputReportSpeakerMute   = 0x19, // 1
+	WKOutputReportIRCamera2     = 0x1a, // 1 byte
 };
 
 // The report format in which the Wiimote should return data
@@ -70,7 +72,7 @@ enum WKInputReport {
 
 @interface WiiRemote (WiiRemoteInternal)
 
-/* Comands */
+/* Commands */
 - (IOReturn)sendCommand:(const uint8_t *)cmd length:(size_t)length;
 
 /* I/O */
@@ -94,5 +96,40 @@ enum WKInputReport {
 
 #pragma mark Callbacks
 - (void)didReceiveAck:(const uint8_t *)ack;
+
+@end
+
+typedef struct {
+	CGFloat x, y, z;
+	CGFloat dx, dy, dz;
+	NSUInteger rawx, rawy, rawz;
+	NSUInteger rawdx, rawdy, rawdz;
+} WKAccelerometerEventData;
+
+typedef struct {
+	CGFloat x, y;
+	CGFloat dx, dy;
+	NSUInteger rawx, rawy;
+	NSUInteger rawdx, rawdy;
+} WKJoystickEventData;
+
+typedef struct {
+	CGFloat x;
+	CGFloat dx;
+	NSUInteger rawx;
+	NSUInteger rawdx;
+} WKAnalogEventData;
+
+@interface WiiRemote (WiiRemoteEvent)
+
+- (void)sendEvent:(WKEvent *)theEvent;
+
+- (void)sendStatusEvent:(NSUInteger)value subtype:(WKEventSubtype)subtype;
+
+- (void)sendButtonEvent:(NSUInteger)button subtype:(WKEventSubtype)subtype down:(BOOL)isButtonDown;
+
+- (void)sendAnalogEvent:(WKAnalogEventData *)data subtype:(WKEventSubtype)subtype;
+- (void)sendJoystickEvent:(WKJoystickEventData *)data subtype:(WKEventSubtype)subtype;
+- (void)sendAccelerometerEvent:(WKAccelerometerEventData *)data subtype:(WKEventSubtype)subtype;
 
 @end

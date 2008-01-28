@@ -28,7 +28,6 @@
 			wk_wiiFlags.leds = 0x1f;
 			
 			[wk_connection setDelegate:self];
-			[wk_connection connect];
 		}
 	}
 	return self;
@@ -54,8 +53,19 @@
 }
 
 #pragma mark -
+- (id)delegate {
+	return wk_delegate;
+}
+- (void)setDelegate:(id)aDelegate {
+	wk_delegate = aDelegate;
+}
+
 - (NSString *)address {
 	return [[wk_connection device] getAddressString];
+}
+
+- (IOReturn)connect {
+	return [wk_connection connect];
 }
 
 - (BOOL)isConnected {
@@ -66,13 +76,22 @@
 }
 
 - (void)connectionDidOpen:(WKConnection *)aConnection {
-	WKLog(@"TODO: notify %@ connected", self);
+	wk_wiiFlags.connected = 1;
 	/* turn off all leds */
 	[self setLeds:0];
 	/* get status */
 	[self refreshStatus];
 	/* request wiimote calibration */
 	[self refreshCalibration];
+	
+	if ([wk_delegate respondsToSelector:@selector(wiimoteDidConnect:)])
+		[wk_delegate wiimoteDidConnect:self];
+}
+
+-(void)connectionDidClose:(WKConnection *)aConnection {
+	wk_wiiFlags.connected = 0;
+	if ([wk_delegate respondsToSelector:@selector(wiimoteDidDisconnect:)])
+		[wk_delegate wiimoteDidDisconnect:self];
 }
 
 - (BOOL)isContinuous {
