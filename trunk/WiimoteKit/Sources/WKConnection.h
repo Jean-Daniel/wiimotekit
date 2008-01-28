@@ -43,6 +43,7 @@
 @interface NSObject (WKConnectionDelegate)
 
 - (void)connectionDidOpen:(WKConnection *)aConnection;
+- (void)connectionDidClose:(WKConnection *)aConnection;
 - (void)connection:(WKConnection *)aConnection didReceiveData:(uint8_t *)data length:(size_t)length;
 - (void)connection:(WKConnection *)aConnection didSendData:(void *)ctxt error:(IOReturn)status;
 

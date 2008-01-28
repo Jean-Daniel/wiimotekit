@@ -25,13 +25,13 @@
 	bool button = (buttons & 0x02) == 0;
 	if (wk_wnFlags.c != button) {
 		wk_wnFlags.c = button;
-		WKLog(@"TODO: Notify nunchuk C button change");
+		[[self wiiRemote] sendButtonEvent:kWKNunchukButtonC subtype:kWKEventExtensionButton down:button];
 	}
 	
 	button = (buttons & 0x01) == 0;
 	if (wk_wnFlags.z != button) {
 		wk_wnFlags.z = button;
-		WKLog(@"TODO: Notify nunchuk Z button change");
+		[[self wiiRemote] sendButtonEvent:kWKNunchukButtonZ subtype:kWKEventExtensionButton down:button];
 	}
 	
 	/* Joystick */
@@ -39,34 +39,69 @@
 	rawx = WII_DECRYPT(memory[0]);
 	rawy = WII_DECRYPT(memory[1]);
 	if (rawx != wk_rawX || rawy != wk_rawY) {
-		wk_rawX = rawx;
-		wk_rawY = rawy;
+		WKJoystickEventData event;
+		bzero(&event, sizeof(event));
+		event.rawx = rawx;
+		event.rawy = rawy;
 		
-		if(wk_calib.x.max)
-			wk_x = (CGFloat)(wk_rawX - wk_calib.x.center) / (wk_calib.x.max - wk_calib.x.min);
-		if(wk_calib.y.max)
-			wk_y = (CGFloat)(wk_rawY - wk_calib.y.center) / (wk_calib.y.max - wk_calib.y.min);
-		WKLog(@"TODO: Notify nunchuk joystick change");
+		event.rawdx = event.rawx - wk_rawX;
+		event.rawdy = event.rawy - wk_rawY;
+		
+		if(wk_calib.x.max) {
+			event.x = (CGFloat)(event.rawx - wk_calib.x.center) / (wk_calib.x.max - wk_calib.x.min);
+			event.dx = event.x - wk_x;
+		}
+		if(wk_calib.y.max) {
+			event.y = (CGFloat)(event.rawy - wk_calib.y.center) / (wk_calib.y.max - wk_calib.y.min);
+			event.dy = event.y - wk_y;
+		}
+		
+		wk_x = event.x;
+		wk_y = event.y;
+		
+		wk_rawX = event.rawx;
+		wk_rawY = event.rawy;
+		
+		[[self wiiRemote] sendJoystickEvent:&event subtype:0];
 	}
 	
 	/* Accelerometer */
-	uint8_t accx, accy, accz;
-	accx = WII_DECRYPT(memory[2]);
-	accy = WII_DECRYPT(memory[3]);
-	accz = WII_DECRYPT(memory[4]);
-	if (accx != wk_acc.rawX || accy != wk_acc.rawY || accz != wk_acc.rawZ) {
-		wk_acc.rawX = accx;
-		wk_acc.rawY = accy;
-		wk_acc.rawZ = accz;
+	WKAccelerometerEventData event;
+	bzero(&event, sizeof(event));
+	/* position */
+	event.rawx = WII_DECRYPT(memory[2]);
+	event.rawy = WII_DECRYPT(memory[3]);
+	event.rawz = WII_DECRYPT(memory[4]);
+	if (event.rawx != wk_acc.rawX || event.rawy != wk_acc.rawY || event.rawz != wk_acc.rawZ) {
+		
+		/* delta */
+		event.rawdx = event.rawx - wk_acc.rawX;
+		event.rawdy = event.rawy - wk_acc.rawY;
+		event.rawdz = event.rawz - wk_acc.rawZ;		
 		
 		/* compute calibrated values */
-		if (wk_calib.acc.x0)
-			wk_acc.x = (CGFloat)(wk_acc.rawX - wk_calib.acc.x0) / (wk_calib.acc.xG - wk_calib.acc.x0);
-		if (wk_calib.acc.y0)
-			wk_acc.y = (CGFloat)(wk_acc.rawY - wk_calib.acc.y0) / (wk_calib.acc.yG - wk_calib.acc.y0);
-		if (wk_calib.acc.z0)
-			wk_acc.z = (CGFloat)(wk_acc.rawZ - wk_calib.acc.z0) / (wk_calib.acc.zG - wk_calib.acc.z0);
-		WKLog(@"TODO: Notify nunchuk position change");
+		if (wk_calib.acc.x0) {
+			event.x = (CGFloat)(event.rawx - wk_calib.acc.x0) / (wk_calib.acc.xG - wk_calib.acc.x0);
+			event.dx = event.x - wk_acc.x;
+		}
+		if (wk_calib.acc.y0) {
+			event.y = (CGFloat)(event.rawy - wk_calib.acc.y0) / (wk_calib.acc.yG - wk_calib.acc.y0);
+			event.dy = event.y - wk_acc.y;
+		}
+		if (wk_calib.acc.z0) {
+			event.z = (CGFloat)(event.rawz - wk_calib.acc.z0) / (wk_calib.acc.zG - wk_calib.acc.z0);
+			event.dz = event.z - wk_acc.z;
+		}
+		
+		wk_acc.x = event.x;
+		wk_acc.y = event.y;
+		wk_acc.z = event.z;
+		
+		wk_acc.rawX = event.rawx;
+		wk_acc.rawY = event.rawy;
+		wk_acc.rawZ = event.rawz;
+		
+		[[self wiiRemote] sendAccelerometerEvent:&event subtype:kWKEventExtensionAccelerometer];
 	}
 }
 

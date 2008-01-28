@@ -9,6 +9,8 @@
 #import "WiiTest.h"
 
 #import <mach/mach_error.h>
+
+#import <WiimoteKit/WKEvent.h>
 #import <WiimoteKit/WiiRemote.h>
 #import <IOBluetooth/objc/IOBluetoothDevice.h>
 
@@ -50,8 +52,9 @@ int main(int argc, const char **argv) {
 	[wk_wiimote setRumbleEnabled:![wk_wiimote isRumbleEnabled]];
 }
 - (IBAction)infrared:(id)sender {
-	//[wk_wiimote setContinuous:![wk_wiimote isIrEnabled]];
 	[wk_wiimote setAcceptsIRCameraEvents:![wk_wiimote acceptsIRCameraEvents]];
+//	[wk_wiimote setSpeakerEnabled:YES];
+//	[wk_wiimote setSpeakerMuted:YES];
 }
 - (IBAction)accelerometer:(id)sender {
 	[wk_wiimote setAcceptsAccelerometerEvents:![wk_wiimote acceptsAccelerometerEvents]];
@@ -106,9 +109,37 @@ int main(int argc, const char **argv) {
 				NSLog(@"device is busy");
 				[NSThread sleepUntilDate:[NSDate dateWithTimeIntervalSinceNow:1]];
 			}
+		} else {
+			[wk_wiimote setDelegate:self];
+			[wk_wiimote connect];
 		}
 	} else {
 		NSLog(@"does not currently support many devices");
+	}
+}
+
+- (void)wiimoteDidConnect:(WiiRemote *)aRemote {
+	
+}
+
+- (void)wiimoteDidDisconnect:(WiiRemote *)aRemote {
+	[wk_wiimote release];
+	wk_wiimote = nil;
+}
+
+- (void)handleStatusEvent:(WKEvent *)anEvent {
+	switch ([anEvent subtype]) {
+		case kWKStatusEventBattery:
+			[ibBattery setDoubleValue:[anEvent status] * 100. / 0xc0];
+			break;
+	}
+}
+
+- (void)wiimote:(WiiRemote *)aRemote sendEvent:(WKEvent *)anEvent {
+	switch ([anEvent type]) {
+		case kWKEventStatusChange:
+			[self handleStatusEvent:anEvent];
+			break;
 	}
 }
 

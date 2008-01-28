@@ -34,7 +34,7 @@
 		uint8_t cmd[] = { WKOutputReportLEDs, leds << 4 };
 		err = [self sendCommand:cmd length:2];
 		if (kIOReturnSuccess == err)
-			[self refreshStatus]; // will send a led did change notification
+			err = [self refreshStatus]; // will send a led did change notification
 	}
 	WKPrintIOReturn(err, "setLeds");
 }

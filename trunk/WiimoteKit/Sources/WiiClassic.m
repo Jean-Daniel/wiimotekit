@@ -22,73 +22,114 @@
 	/* stats is negative, so use ~buttons */
 	buttons = ~buttons & kWKClassicButtonsMask;
 	if (buttons != wk_buttons) {
+		for (NSUInteger idx = 0; idx < 16; idx++) {
+			NSUInteger flag = 1 << idx;
+			if (flag & kWKClassicButtonsMask) {
+				/* xor */
+				bool before = wk_buttons & flag;
+				bool after = buttons & flag;
+				if ((before && !after) || (!before && after)) {
+					[[self wiiRemote] sendButtonEvent:flag subtype:kWKEventExtensionButton down:before];
+				}
+			}
+		}
 		wk_buttons = buttons;
-		// TODO: compute delta
-		WKLog(@"TODO: Notify classic buttons change");
 	}
 	
 	uint8_t tmp[] = { WII_DECRYPT(data[0]), WII_DECRYPT(data[1]), WII_DECRYPT(data[2]) };
 	
-	uint8_t x, y;
+	WKJoystickEventData event;
+	bzero(&event, sizeof(event));
 	/* left joystick */
-	x = tmp[0] & 0x3f;
-	y = tmp[1] & 0x3f;
-	if (x != wk_rawXL || y != wk_rawYL) {
-		wk_rawXL = x;
-		wk_rawYL = y;
+	event.rawx = tmp[0] & 0x3f;
+	event.rawy = tmp[1] & 0x3f;
+	if (event.rawx != wk_rawXL || event.rawy != wk_rawYL) {
+		event.rawdx = event.rawx - wk_rawXL;
+		event.rawdy = event.rawy - wk_rawYL;
 		
-		/* compute calibrated values */
-		if(wk_calib.xl.max)
-			wk_xl = (CGFloat)(wk_rawXL - wk_calib.xl.center) / 
-			(wk_calib.xl.max - wk_calib.xl.min);
-		if(wk_calib.yl.max)
-			wk_yl = (CGFloat)(wk_rawYL - wk_calib.yl.center) / 
-			(wk_calib.yl.max - wk_calib.yl.min);
+		if(wk_calib.xl.max) {
+			event.x = (CGFloat)(event.rawx - wk_calib.xl.center) / (wk_calib.xl.max - wk_calib.xl.min);
+			event.dx = event.x - wk_xl;
+		}
+		if(wk_calib.yl.max) {
+			event.y = (CGFloat)(event.rawy - wk_calib.yl.center) / (wk_calib.yl.max - wk_calib.yl.min);
+			event.dy = event.y - wk_yl;
+		}
 		
-		WKLog(@"TODO: Notify classic left joystick change");
+		wk_xl = event.x;
+		wk_yl = event.y;
+		
+		wk_rawXL = event.rawx;
+		wk_rawYL = event.rawy;
+		
+		[[self wiiRemote] sendJoystickEvent:&event subtype:kWKEventRightJoystick];
 	}
 	
 	/* right joystick */
-	x = (((tmp[0] & 0xc0) >> 3) | ((tmp[1] & 0xc0) >> 5) | ((tmp[2] & 0x80) >> 7)) & 0x1f;
-	y = tmp[2] & 0x1f;
-	if (x != wk_rawXR || y != wk_rawYR) {
-		wk_rawXR = x;
-		wk_rawYR = y;
+	event.rawx = (((tmp[0] & 0xc0) >> 3) | ((tmp[1] & 0xc0) >> 5) | ((tmp[2] & 0x80) >> 7)) & 0x1f;
+	event.rawy = tmp[2] & 0x1f;
+	if (event.rawx != wk_rawXR || event.rawy != wk_rawYR) {
+		event.rawdx = event.rawx - wk_rawXL;
+		event.rawdy = event.rawy - wk_rawYL;
 		
-		/* compute calibrated values */
-		if(wk_calib.xr.max)
-			wk_xr = (CGFloat)(wk_rawXR - wk_calib.xr.center) / 
-			(wk_calib.xr.max - wk_calib.xr.min);
-		if(wk_calib.yr.max)
-			wk_yr = (CGFloat)(wk_rawYR - wk_calib.yr.center) / 
-			(wk_calib.yr.max - wk_calib.yr.min);
+		if(wk_calib.xr.max) {
+			event.x = (CGFloat)(event.rawx - wk_calib.xr.center) / (wk_calib.xr.max - wk_calib.xr.min);
+			event.dx = event.x - wk_xr;
+		}
+		if(wk_calib.yr.max) {
+			event.y = (CGFloat)(event.rawy - wk_calib.yr.center) / (wk_calib.yr.max - wk_calib.yr.min);
+			event.dy = event.y - wk_yr;
+		}
 		
-		WKLog(@"TODO: Notify classic right joystick change");
+		wk_xr = event.x;
+		wk_yr = event.y;
+		
+		wk_rawXR = event.rawx;
+		wk_rawYR = event.rawy;
+		
+		[[self wiiRemote] sendJoystickEvent:&event subtype:kWKEventRightJoystick];
 	}
 	
 	/* L and R */
 	uint8_t value;			
 	value = (((tmp[2] & 0x60) >> 2) | (tmp[3] >> 5)) & 0x1f;
 	if (value != wk_rawTL) {
-		wk_rawTL = value;
+		WKAnalogEventData event;
+		bzero(&event, sizeof(event));
+		
+		event.rawx = value;
+		event.rawdx = event.rawx - wk_rawTL;
 		
 		/* compute calibrated values */
-		if(wk_calib.tl.max)
-			wk_tl = (CGFloat)wk_rawTL / 
-			(wk_calib.tl.max - wk_calib.tl.min);
+		if(wk_calib.tl.max) {
+			event.x = (CGFloat)event.rawx / (wk_calib.tl.max - wk_calib.tl.min);
+			event.dx = event.x - wk_tl;
+		}
 		
-		WKLog(@"TODO: Notify classic L Button change");
+		wk_tl = event.x;
+		wk_rawTL = event.rawx;
+		
+		[[self wiiRemote] sendAnalogEvent:&event subtype:kWKEventAnalogLeftButton];
 	}
 	
 	value = tmp[3] & 0x1f;
 	if (value != wk_rawTR) {
-		wk_rawTR = value;
+		WKAnalogEventData event;
+		bzero(&event, sizeof(event));
 		
-		if(wk_calib.tr.max)
-			wk_tr = (CGFloat)wk_rawTR / 
-			(wk_calib.tr.max - wk_calib.tr.min);				
+		event.rawx = value;
+		event.rawdx = event.rawx - wk_rawTR;
 		
-		WKLog(@"TODO: Notify classic R Button change");
+		/* compute calibrated values */
+		if(wk_calib.tr.max) {
+			event.x = (CGFloat)event.rawx / (wk_calib.tr.max - wk_calib.tr.min);
+			event.dx = event.x - wk_tr;
+		}
+		
+		wk_tr = event.x;
+		wk_rawTR = event.rawx;
+		
+		[[self wiiRemote] sendAnalogEvent:&event subtype:kWKEventAnalogRightButton];
 	}
 }
 

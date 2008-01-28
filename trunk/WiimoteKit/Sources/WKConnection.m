@@ -288,6 +288,9 @@ enum {
 			break;
 		case kBluetoothL2CAPPSMHIDInterrupt:
 			wk_status = kWKConnectionStatusError; // prevent control reconnection
+			if ([wk_delegate respondsToSelector:@selector(connectionDidClose:)]) {
+				[wk_delegate connectionDidClose:self];
+			}
 			WKLog(@"Interrupt closed!");
 			[self cleanup];
 			break;

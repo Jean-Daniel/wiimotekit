@@ -20,6 +20,10 @@ typedef struct _WKNunchukCalibration {
 	WKAccelerationCalibration acc;
 } WKNunchukCalibration;
 
+enum {
+	kWKNunchukButtonC = 1 << 0,
+	kWKNunchukButtonZ = 1 << 1,
+};
 @interface WiiNunchuk : WKExtension {
 @private
 	WKAccelerationState wk_acc; // State of accelerometers

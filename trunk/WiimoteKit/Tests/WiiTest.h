@@ -11,7 +11,9 @@
 
 @class WiiRemote;
 @interface WiiTest : NSObject {
+	IBOutlet NSLevelIndicator *ibBattery;
 	IBOutlet NSProgressIndicator *ibSearch;
+	
 	WiiRemote *wk_wiimote;
 	
 	NSTimer *wk_funny;
@@ -21,6 +23,7 @@
 - (IBAction)rumble:(id)sender;
 - (IBAction)infrared:(id)sender;
 - (IBAction)accelerometer:(id)sender;
+
 
 - (IBAction)funny:(id)sender;
 - (IBAction)continous:(id)sender;
