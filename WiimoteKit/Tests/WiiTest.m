@@ -10,8 +10,6 @@
 
 #import <mach/mach_error.h>
 
-#import <WiimoteKit/WKEvent.h>
-#import <WiimoteKit/WiiRemote.h>
 #import <IOBluetooth/objc/IOBluetoothDevice.h>
 
 int main(int argc, const char **argv) {

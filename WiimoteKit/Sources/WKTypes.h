@@ -7,6 +7,23 @@
  *
  */
 
+#if MAC_OS_X_VERSION_MAX_ALLOWED < MAC_OS_X_VERSION_10_5
+	#if !__LP64__
+		typedef int NSInteger;
+		typedef unsigned int NSUInteger;
+
+		typedef float CGFloat;
+		#define CGFLOAT_MIN FLT_MIN
+		#define CGFLOAT_MAX FLT_MAX
+	#else
+		#error 64 bits no supported for deployement version < MAC_OS_X_VERSION_10_5.
+	#endif
+
+	#define NSIntegerMax    LONG_MAX
+	#define NSIntegerMin    LONG_MIN
+	#define NSUIntegerMax   ULONG_MAX
+#endif
+
 /*!
  @enum 
  @abstract The extension plugged into the Wiimote

@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		1B354B290D3FA80000A73B82 /* MainMenu.nib in Resources */ = {isa = PBXBuildFile; fileRef = 1B354B280D3FA80000A73B82 /* MainMenu.nib */; };
+		1B41D6120D4DD66E00C047EC /* WKBase.h in Headers */ = {isa = PBXBuildFile; fileRef = 1B41D6110D4DD66E00C047EC /* WKBase.h */; };
 		1B4F1C4E0D3A49AD000DDEB9 /* WiimoteKit.h in Headers */ = {isa = PBXBuildFile; fileRef = 1B4F1C490D3A48C0000DDEB9 /* WiimoteKit.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		1B4F1C630D3A4AE8000DDEB9 /* Wiimote+Control.m in Sources */ = {isa = PBXBuildFile; fileRef = 1B4F1C620D3A4AE8000DDEB9 /* Wiimote+Control.m */; };
 		1B4F1C660D3A4B0E000DDEB9 /* Wiimote+Interrupt.m in Sources */ = {isa = PBXBuildFile; fileRef = 1B4F1C650D3A4B0E000DDEB9 /* Wiimote+Interrupt.m */; };
@@ -55,6 +56,7 @@
 		089C1667FE841158C02AAC07 /* English */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = English; path = English.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		1058C7B1FEA5585E11CA2CBB /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = /System/Library/Frameworks/Cocoa.framework; sourceTree = "<absolute>"; };
 		1B354B280D3FA80000A73B82 /* MainMenu.nib */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; path = MainMenu.nib; sourceTree = "<group>"; };
+		1B41D6110D4DD66E00C047EC /* WKBase.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WKBase.h; sourceTree = "<group>"; };
 		1B4F1C490D3A48C0000DDEB9 /* WiimoteKit.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WiimoteKit.h; sourceTree = "<group>"; };
 		1B4F1C620D3A4AE8000DDEB9 /* Wiimote+Control.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "Wiimote+Control.m"; sourceTree = "<group>"; };
 		1B4F1C650D3A4B0E000DDEB9 /* Wiimote+Interrupt.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "Wiimote+Interrupt.m"; sourceTree = "<group>"; };
@@ -156,6 +158,7 @@
 		08FB77AEFE84172EC02AAC07 /* Sources */ = {
 			isa = PBXGroup;
 			children = (
+				1B41D6110D4DD66E00C047EC /* WKBase.h */,
 				1B4F1C490D3A48C0000DDEB9 /* WiimoteKit.h */,
 				1B79037F0D3D7A5200C0A0AD /* WiiRemote */,
 				1B7903670D3D776700C0A0AD /* Extensions */,
@@ -250,6 +253,7 @@
 				1B79036A0D3D777900C0A0AD /* WKExtension.h in Headers */,
 				1B7750780D3E8847009518CB /* WiiRemoteInternal.h in Headers */,
 				1B72A86A0D4011BB006F30B8 /* WKEvent.h in Headers */,
+				1B41D6120D4DD66E00C047EC /* WKBase.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
