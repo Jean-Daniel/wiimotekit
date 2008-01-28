@@ -7,7 +7,9 @@
 //
 
 #import <WiimoteKit/WKConnection.h>
-#import <WiimoteKit/WiimoteKit.h>
+
+#import "WKBase.h"
+#import <WiimoteKit/WKTypes.h>
 
 #import <IOBluetooth/objc/IOBluetoothDevice.h>
 #import <IOBluetooth/objc/IOBluetoothL2CAPChannel.h>

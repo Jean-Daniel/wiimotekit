@@ -6,8 +6,10 @@
 //  Copyright 2008 Shadow Lab.. All rights reserved.
 //
 
-#import "WKDiscovery.h"
-#include <mach/mach_error.h>
+#import <WiimoteKit/WKDiscovery.h>
+
+#import "WKBase.h"
+#import <WiimoteKit/WKTypes.h>
 
 #import <IOBluetooth/objc/IOBluetoothDevice.h>
 #import <IOBluetooth/objc/IOBluetoothDeviceInquiry.h>

@@ -6,8 +6,7 @@
 //  Copyright 2008 Shadow Lab.. All rights reserved.
 //
 
-#import <Cocoa/Cocoa.h>
-#import <WiimoteKit/WKDiscovery.h>
+#import <WiimoteKit/WiimoteKit.h>
 
 @class WiiRemote;
 @interface WiiTest : NSObject {

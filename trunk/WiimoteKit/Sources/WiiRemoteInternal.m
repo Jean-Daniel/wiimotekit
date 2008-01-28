@@ -8,7 +8,6 @@
 
 #import "WiiRemoteInternal.h"
 
-#import <WiimoteKit/WiimoteKit.h>
 #import <WiimoteKit/WKExtension.h>
 #import <WiimoteKit/WKConnection.h>
 

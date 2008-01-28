@@ -10,10 +10,16 @@
 #if !defined(__WIIMOTEKIT_H)
 #define __WIIMOTEKIT_H 1
 
-#include <mach/mach_error.h>
+#import <WiimoteKit/WKTypes.h>
 
-#define WKLog(str, args...) NSLog(str, ##args)
-#define WKPrintIOReturn(result, str) if (kIOReturnSuccess != result) { fprintf(stderr, "%s: %s\n", str, mach_error_string(result)); }
+#import <WiimoteKit/WKEvent.h>
+#import <WiimoteKit/WKDiscovery.h>
+#import <WiimoteKit/WKConnection.h>
 
+#import <WiimoteKit/WiiRemote.h>
+#import <WiimoteKit/WKExtension.h>
+
+#import <WiimoteKit/WiiClassic.h>
+#import <WiimoteKit/WiiNunchuk.h>
 
 #endif /* __WIIMOTEKIT_H */

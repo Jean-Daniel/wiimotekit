@@ -121,6 +121,7 @@ typedef struct _WKIRState {
 		unsigned int irAbort:1;
 		unsigned int extInit:1;
 		unsigned int speakerInit:1; 
+		unsigned int speakerAbort:1;
 	} wk_wiiFlags;
 	
 	NSMutableData *wk_buffer; /* download buffer */

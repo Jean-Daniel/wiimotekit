@@ -7,9 +7,10 @@
  *
  */
 
+#import "WKBase.h"
+
 #import <WiimoteKit/WKEvent.h>
 #import <WiimoteKit/WiiRemote.h>
-#import <WiimoteKit/WiimoteKit.h>
 
 enum {
 	kWKMemorySpaceWiiRemote = 1,
