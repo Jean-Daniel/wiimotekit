@@ -2,8 +2,8 @@
 //  Wiimote+Speaker.m
 //  WiimoteKit
 //
-//  Created by Jean-Daniel Dupas on 18/01/08.
-//  Copyright 2008 Ninsight. All rights reserved.
+//  Created by Jean-Daniel Dupas on 13/01/08.
+//  Copyright 2008 Shadow Lab. All rights reserved.
 //
 
 #import <WiimoteKit/WiiRemote.h>

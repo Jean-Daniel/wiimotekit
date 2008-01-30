@@ -2,9 +2,8 @@
  *  WKBase.h
  *  WiimoteKit
  *
- *  Created by Jean-Daniel Dupas on 28/01/08.
- *  Copyright 2008 Ninsight. All rights reserved.
- *
+ *  Created by Jean-Daniel Dupas on 16/01/08.
+ *  Copyright 2008 Shadow Lab. All rights reserved.
  */
 
 #include <mach/mach_error.h>

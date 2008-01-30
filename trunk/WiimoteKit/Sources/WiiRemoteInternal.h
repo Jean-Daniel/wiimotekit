@@ -3,8 +3,7 @@
  *  WiimoteKit
  *
  *  Created by Jean-Daniel Dupas on 16/01/08.
- *  Copyright 2008 Shadow Lab.. All rights reserved.
- *
+ *  Copyright 2008 Shadow Lab. All rights reserved.
  */
 
 #import "WKBase.h"
