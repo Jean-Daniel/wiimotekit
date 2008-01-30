@@ -48,11 +48,11 @@
 		event.rawdy = event.rawy - wk_rawYL;
 		
 		if(wk_calib.xl.max) {
-			event.x = (CGFloat)(event.rawx - wk_calib.xl.center) / (wk_calib.xl.max - wk_calib.xl.min);
+			event.x = ((CGFloat)event.rawx - wk_calib.xl.center) / (wk_calib.xl.max - wk_calib.xl.min);
 			event.dx = event.x - wk_xl;
 		}
 		if(wk_calib.yl.max) {
-			event.y = (CGFloat)(event.rawy - wk_calib.yl.center) / (wk_calib.yl.max - wk_calib.yl.min);
+			event.y = ((CGFloat)event.rawy - wk_calib.yl.center) / (wk_calib.yl.max - wk_calib.yl.min);
 			event.dy = event.y - wk_yl;
 		}
 		
@@ -73,11 +73,11 @@
 		event.rawdy = event.rawy - wk_rawYL;
 		
 		if(wk_calib.xr.max) {
-			event.x = (CGFloat)(event.rawx - wk_calib.xr.center) / (wk_calib.xr.max - wk_calib.xr.min);
+			event.x = ((CGFloat)event.rawx - wk_calib.xr.center) / (wk_calib.xr.max - wk_calib.xr.min);
 			event.dx = event.x - wk_xr;
 		}
 		if(wk_calib.yr.max) {
-			event.y = (CGFloat)(event.rawy - wk_calib.yr.center) / (wk_calib.yr.max - wk_calib.yr.min);
+			event.y = ((CGFloat)event.rawy - wk_calib.yr.center) / (wk_calib.yr.max - wk_calib.yr.min);
 			event.dy = event.y - wk_yr;
 		}
 		

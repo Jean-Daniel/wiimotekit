@@ -151,15 +151,15 @@
 	
 		/* compute calibrated values */
 		if (wk_accCalib.x0) {
-			event.x = (CGFloat)(event.rawx - wk_accCalib.x0) / (wk_accCalib.xG - wk_accCalib.x0);
+			event.x = ((CGFloat)event.rawx - wk_accCalib.x0) / (wk_accCalib.xG - wk_accCalib.x0);
 			event.dx = event.x - wk_accState.x;
 		}
 		if (wk_accCalib.y0) {
-			event.y = (CGFloat)(event.rawy - wk_accCalib.y0) / (wk_accCalib.yG - wk_accCalib.y0);
+			event.y = ((CGFloat)event.rawy - wk_accCalib.y0) / (wk_accCalib.yG - wk_accCalib.y0);
 			event.dy = event.y - wk_accState.y;
 		}
 		if (wk_accCalib.z0) {
-			event.z = (CGFloat)(event.rawz - wk_accCalib.z0) / (wk_accCalib.zG - wk_accCalib.z0);
+			event.z = ((CGFloat)event.rawz - wk_accCalib.z0) / (wk_accCalib.zG - wk_accCalib.z0);
 			event.dz = event.z - wk_accState.z;
 		}
 		

@@ -7,7 +7,7 @@
 //
 
 #import <WiimoteKit/WKTypes.h>
-
+#import <CoreAudio/CoreAudio.h>
 enum {
 	kWKWiiRemoteButtonTwo    = 1 << 0,
 	kWKWiiRemoteButtonOne    = 1 << 1,
@@ -191,8 +191,6 @@ typedef struct _WKIRState {
 
 - (void)setSpeakerDataSource:(id<WiiRemoteSpakerDataSource>)source;
 
-- (NSUInteger)speakerRate;
-
 @end
 
 @class WKEvent;
@@ -202,6 +200,8 @@ typedef struct _WKIRState {
 - (void)wiimoteDidDisconnect:(WiiRemote *)aRemote;
 
 - (void)wiimote:(WiiRemote *)aRemote sendEvent:(WKEvent *)anEvent;
+
+- (OSStatus)getAudioFormat:(AudioStreamBasicDescription *)format;
 
 @end
 

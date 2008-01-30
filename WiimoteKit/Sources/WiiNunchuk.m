@@ -48,11 +48,11 @@
 		event.rawdy = event.rawy - wk_rawY;
 		
 		if(wk_calib.x.max) {
-			event.x = (CGFloat)(event.rawx - wk_calib.x.center) / (wk_calib.x.max - wk_calib.x.min);
+			event.x = ((CGFloat)event.rawx - wk_calib.x.center) / (wk_calib.x.max - wk_calib.x.min);
 			event.dx = event.x - wk_x;
 		}
 		if(wk_calib.y.max) {
-			event.y = (CGFloat)(event.rawy - wk_calib.y.center) / (wk_calib.y.max - wk_calib.y.min);
+			event.y = ((CGFloat)event.rawy - wk_calib.y.center) / (wk_calib.y.max - wk_calib.y.min);
 			event.dy = event.y - wk_y;
 		}
 		
@@ -81,15 +81,15 @@
 		
 		/* compute calibrated values */
 		if (wk_calib.acc.x0) {
-			event.x = (CGFloat)(event.rawx - wk_calib.acc.x0) / (wk_calib.acc.xG - wk_calib.acc.x0);
+			event.x = ((CGFloat)event.rawx - wk_calib.acc.x0) / (wk_calib.acc.xG - wk_calib.acc.x0);
 			event.dx = event.x - wk_acc.x;
 		}
 		if (wk_calib.acc.y0) {
-			event.y = (CGFloat)(event.rawy - wk_calib.acc.y0) / (wk_calib.acc.yG - wk_calib.acc.y0);
+			event.y = ((CGFloat)event.rawy - wk_calib.acc.y0) / (wk_calib.acc.yG - wk_calib.acc.y0);
 			event.dy = event.y - wk_acc.y;
 		}
 		if (wk_calib.acc.z0) {
-			event.z = (CGFloat)(event.rawz - wk_calib.acc.z0) / (wk_calib.acc.zG - wk_calib.acc.z0);
+			event.z = ((CGFloat)event.rawz - wk_calib.acc.z0) / (wk_calib.acc.zG - wk_calib.acc.z0);
 			event.dz = event.z - wk_acc.z;
 		}
 		

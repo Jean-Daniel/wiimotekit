@@ -133,10 +133,23 @@ int main(int argc, const char **argv) {
 	}
 }
 
+- (void)handleAccelerometerEvent:(WKEvent *)anEvent {
+	switch ([anEvent subtype]) {
+		case kWKEventWiimoteAccelerometer:
+			[ibSliderX setDoubleValue:[anEvent absoluteX]];
+			[ibSliderY setDoubleValue:[anEvent absoluteY]];
+			[ibSliderZ setDoubleValue:[anEvent absoluteZ]];
+			break;
+	}
+}
+
 - (void)wiimote:(WiiRemote *)aRemote sendEvent:(WKEvent *)anEvent {
 	switch ([anEvent type]) {
 		case kWKEventStatusChange:
 			[self handleStatusEvent:anEvent];
+			break;
+		case kWKEventAccelerometer:
+			[self handleAccelerometerEvent:anEvent];
 			break;
 	}
 }

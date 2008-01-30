@@ -312,7 +312,7 @@ user_addr_t __WiiRemoteTranslateAddress(user_addr_t address, WKAddressSpace spac
 
 - (void)didStartIRCamera:(NSUInteger)status {
 	if (wk_wiiFlags.irAbort) {
-		
+		[self __stopIRCamera];
 	} else {
 		[self writeData:(const uint8_t[]){ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x90, 0x00, 0xc0 } length:9 
 					atAddress:IR_REGISTER_SENSITIVITY_1  space:kWKMemorySpaceIRCamera next:@selector(didSetIRCameraSensibilityOne:)];	
@@ -320,7 +320,7 @@ user_addr_t __WiiRemoteTranslateAddress(user_addr_t address, WKAddressSpace spac
 }
 - (void)didSetIRCameraSensibilityOne:(NSUInteger)status {
 	if (wk_wiiFlags.irAbort) {
-		
+		[self __stopIRCamera];
 	} else {
 		[self writeData:(const uint8_t[]){ 0x40, 0x00 } length:2 atAddress:IR_REGISTER_SENSITIVITY_2  
 							space:kWKMemorySpaceIRCamera next:@selector(didSetIRCameraSensibilityTwo:)];
@@ -328,7 +328,7 @@ user_addr_t __WiiRemoteTranslateAddress(user_addr_t address, WKAddressSpace spac
 }
 - (void)didSetIRCameraSensibilityTwo:(NSUInteger)status {
 	if (wk_wiiFlags.irAbort) {
-		
+		[self __stopIRCamera];
 	} else {
 		[self writeData:(const uint8_t[]){ 0x08 } length:1 atAddress:IR_REGISTER_STATUS
 							space:kWKMemorySpaceIRCamera next:@selector(didSetIRCameraStatus:)];
@@ -336,7 +336,7 @@ user_addr_t __WiiRemoteTranslateAddress(user_addr_t address, WKAddressSpace spac
 }
 - (void)didSetIRCameraStatus:(NSUInteger)status {
 	if (wk_wiiFlags.irAbort) {
-		
+		[self __stopIRCamera];
 	} else {
 		[self writeData:(const uint8_t[]){ wk_irState.mode } length:1 atAddress:IR_REGISTER_MODE
 							space:kWKMemorySpaceIRCamera next:nil];
@@ -373,11 +373,11 @@ user_addr_t __WiiRemoteTranslateAddress(user_addr_t address, WKAddressSpace spac
 	WKEvent *event = [WKEvent eventWithType:kWKEventAnalogButtonChange wiimote:self];
 	if (subtype) [event setSubtype:subtype];
 	
+	[event setX:data->x];
 	[event setDeltaX:data->dx];
 	
-	[event setAbsoluteX:data->x];
-	
-	[event setCalibratedX:data->x];
+	[event setAbsoluteX:data->rawx];
+	[event setAbsoluteDeltaX:data->rawdx];
 	
 	[self sendEvent:event];	
 }
@@ -385,34 +385,41 @@ user_addr_t __WiiRemoteTranslateAddress(user_addr_t address, WKAddressSpace spac
 - (void)sendJoystickEvent:(WKJoystickEventData *)data subtype:(WKEventSubtype)subtype {
 	WKEvent *event = [WKEvent eventWithType:kWKEventJoystickMove wiimote:self];
 	if (subtype) [event setSubtype:subtype];
+
+	[event setX:data->x];
+	[event setY:data->y];
 	
 	[event setDeltaX:data->dx];
 	[event setDeltaY:data->dy];
 
-	[event setAbsoluteX:data->x];
-	[event setAbsoluteY:data->y];
+	[event setAbsoluteX:data->rawx];
+	[event setAbsoluteY:data->rawy];
 	
-	[event setCalibratedX:data->x];
-	[event setCalibratedY:data->y];
-	
+	[event setAbsoluteDeltaX:data->rawdx];
+	[event setAbsoluteDeltaY:data->rawdy];
+
 	[self sendEvent:event];	
 }
 
 - (void)sendAccelerometerEvent:(WKAccelerometerEventData *)data subtype:(WKEventSubtype)subtype {
 	WKEvent *event = [WKEvent eventWithType:kWKEventAccelerometer wiimote:self];
 	if (subtype) [event setSubtype:subtype];
+
+	[event setX:data->x];
+	[event setY:data->y];
+	[event setZ:data->z];
 	
 	[event setDeltaX:data->dx];
 	[event setDeltaY:data->dy];
 	[event setDeltaZ:data->dz];	
 	
-	[event setAbsoluteX:data->x];
-	[event setAbsoluteY:data->y];
-	[event setAbsoluteZ:data->z];
+	[event setAbsoluteX:data->rawx];
+	[event setAbsoluteY:data->rawy];
+	[event setAbsoluteZ:data->rawz];
 	
-	[event setCalibratedX:data->x];
-	[event setCalibratedY:data->y];
-	[event setCalibratedZ:data->z];
+	[event setAbsoluteDeltaX:data->rawdx];
+	[event setAbsoluteDeltaY:data->rawdy];
+	[event setAbsoluteDeltaZ:data->rawdz];	
 	
 	[self sendEvent:event];	
 }

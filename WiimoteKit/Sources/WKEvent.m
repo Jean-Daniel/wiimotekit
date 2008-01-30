@@ -145,7 +145,77 @@
 	wk_data.button.state = button;
 }
 
-#pragma mark Coords
+#pragma mark -
+#pragma mark Calibrated
+- (CGFloat)x {
+	switch (wk_type) {
+		case kWKEventAccelerometer:
+			return wk_data.acc.x;
+		case kWKEventJoystickMove:
+			return wk_data.joystick.x;
+		case kWKEventAnalogButtonChange:
+			return wk_data.analog.x;
+		default:
+			@throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"Event does not support X" userInfo:nil];
+	}
+}
+- (void)setX:(CGFloat)value {
+	switch (wk_type) {
+		case kWKEventAccelerometer:
+			wk_data.acc.x = value;
+			break;
+		case kWKEventJoystickMove:
+			wk_data.joystick.x = value;
+			break;
+		case kWKEventAnalogButtonChange:
+			wk_data.analog.x = value;
+			break;
+		default:
+			@throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"Event does not support X" userInfo:nil];
+	}
+}
+
+- (CGFloat)y {
+	switch (wk_type) {
+		case kWKEventAccelerometer:
+			return wk_data.acc.y;
+		case kWKEventJoystickMove:
+			return wk_data.joystick.y;
+		default:
+			@throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"Event does not support Y" userInfo:nil];
+	}
+}
+- (void)setY:(CGFloat)value {
+	switch (wk_type) {
+		case kWKEventAccelerometer:
+			wk_data.acc.y = value;
+			break;
+		case kWKEventJoystickMove:
+			wk_data.joystick.y = value;
+			break;
+		default:
+			@throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"Event does not support Y" userInfo:nil];
+	}
+}
+
+- (CGFloat)z {
+	switch (wk_type) {
+		case kWKEventAccelerometer:
+			return wk_data.acc.z;
+		default:
+			@throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"Event does not support Z" userInfo:nil];
+	}
+}
+- (void)setZ:(CGFloat)value {
+	switch (wk_type) {
+		case kWKEventAccelerometer:
+			wk_data.acc.z = value;
+			break;
+		default:
+			@throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"Event does not support Z" userInfo:nil];
+	}
+}
+
 - (CGFloat)deltaX {
 	switch (wk_type) {
 		case kWKEventAccelerometer:
@@ -181,7 +251,7 @@
 		case kWKEventJoystickMove:
 			return wk_data.joystick.dy;
 		default:
-			@throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"Event does not support delta X" userInfo:nil];
+			@throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"Event does not support delta Y" userInfo:nil];
 	}	
 }
 - (void)setDeltaY:(CGFloat)delta {
@@ -202,7 +272,7 @@
 		case kWKEventAccelerometer:
 			return wk_data.acc.dz;
 		default:
-			@throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"Event does not support delta X" userInfo:nil];
+			@throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"Event does not support delta Z" userInfo:nil];
 	}	
 }
 - (void)setDeltaZ:(CGFloat)delta {
@@ -215,75 +285,7 @@
 	}
 }
 
-- (CGFloat)calibratedX {
-	switch (wk_type) {
-		case kWKEventAccelerometer:
-			return wk_data.acc.x;
-		case kWKEventJoystickMove:
-			return wk_data.joystick.x;
-		case kWKEventAnalogButtonChange:
-			return wk_data.analog.x;
-		default:
-			@throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"Event does not support delta X" userInfo:nil];
-	}
-}
-- (void)setCalibratedX:(CGFloat)value {
-	switch (wk_type) {
-		case kWKEventAccelerometer:
-			wk_data.acc.x = value;
-			break;
-		case kWKEventJoystickMove:
-			wk_data.joystick.x = value;
-			break;
-		case kWKEventAnalogButtonChange:
-			wk_data.analog.x = value;
-			break;
-		default:
-			@throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"Event does not support delta X" userInfo:nil];
-	}
-}
-
-- (CGFloat)calibratedY {
-	switch (wk_type) {
-		case kWKEventAccelerometer:
-			return wk_data.acc.y;
-		case kWKEventJoystickMove:
-			return wk_data.joystick.y;
-		default:
-			@throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"Event does not support delta X" userInfo:nil];
-	}
-}
-- (void)setCalibratedY:(CGFloat)value {
-	switch (wk_type) {
-		case kWKEventAccelerometer:
-			wk_data.acc.y = value;
-			break;
-		case kWKEventJoystickMove:
-			wk_data.joystick.y = value;
-			break;
-		default:
-			@throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"Event does not support delta X" userInfo:nil];
-	}
-}
-
-- (CGFloat)calibratedZ {
-	switch (wk_type) {
-		case kWKEventAccelerometer:
-			return wk_data.acc.z;
-		default:
-			@throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"Event does not support delta X" userInfo:nil];
-	}
-}
-- (void)setCalibratedZ:(CGFloat)value {
-	switch (wk_type) {
-		case kWKEventAccelerometer:
-			wk_data.acc.z = value;
-			break;
-		default:
-			@throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"Event does not support delta X" userInfo:nil];
-	}
-}
-
+#pragma mark Absolute
 - (NSInteger)absoluteX {
 	switch (wk_type) {
 		case kWKEventAccelerometer:
@@ -293,7 +295,7 @@
 		case kWKEventAnalogButtonChange:
 			return wk_data.analog.rawx;
 		default:
-			@throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"Event does not support delta X" userInfo:nil];
+			@throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"Event does not support X" userInfo:nil];
 	}
 }
 - (void)setAbsoluteX:(NSUInteger)value {
@@ -308,7 +310,7 @@
 			wk_data.analog.rawx = value;
 			break;
 		default:
-			@throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"Event does not support delta X" userInfo:nil];
+			@throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"Event does not support X" userInfo:nil];
 	}
 }
 
@@ -319,7 +321,7 @@
 		case kWKEventJoystickMove:
 			return wk_data.joystick.rawy;
 		default:
-			@throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"Event does not support delta X" userInfo:nil];
+			@throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"Event does not support Y" userInfo:nil];
 	}	
 }
 - (void)setAbsoluteY:(NSUInteger)value {
@@ -331,7 +333,7 @@
 			wk_data.joystick.rawy = value;
 			break;
 		default:
-			@throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"Event does not support delta X" userInfo:nil];
+			@throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"Event does not support Y" userInfo:nil];
 	}
 }
 
@@ -340,7 +342,7 @@
 		case kWKEventAccelerometer:
 			return wk_data.acc.rawz;
 		default:
-			@throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"Event does not support delta X" userInfo:nil];
+			@throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"Event does not support Z" userInfo:nil];
 	}
 }
 - (void)setAbsoluteZ:(NSUInteger)value {
@@ -349,7 +351,76 @@
 			wk_data.acc.rawz = value;
 			break;
 		default:
+			@throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"Event does not support Z" userInfo:nil];
+	}
+}
+
+- (NSInteger)absoluteDeltaX {
+	switch (wk_type) {
+		case kWKEventAccelerometer:
+			return wk_data.acc.rawdx;
+		case kWKEventJoystickMove:
+			return wk_data.joystick.rawdx;
+		case kWKEventAnalogButtonChange:
+			return wk_data.analog.rawdx;
+		default:
 			@throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"Event does not support delta X" userInfo:nil];
+	}
+}
+- (void)setAbsoluteDeltaX:(NSUInteger)value {
+	switch (wk_type) {
+		case kWKEventAccelerometer:
+			wk_data.acc.rawdx = value;
+			break;
+		case kWKEventJoystickMove:
+			wk_data.joystick.rawdx = value;
+			break;
+		case kWKEventAnalogButtonChange:
+			wk_data.analog.rawdx = value;
+			break;
+		default:
+			@throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"Event does not support delta X" userInfo:nil];
+	}
+}
+
+- (NSInteger)absoluteDeltaY {
+	switch (wk_type) {
+		case kWKEventAccelerometer:
+			return wk_data.acc.rawdy;
+		case kWKEventJoystickMove:
+			return wk_data.joystick.rawdy;
+		default:
+			@throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"Event does not support delta Y" userInfo:nil];
+	}	
+}
+- (void)setAbsoluteDeltaY:(NSUInteger)value {
+	switch (wk_type) {
+		case kWKEventAccelerometer:
+			wk_data.acc.rawdy = value;
+			break;
+		case kWKEventJoystickMove:
+			wk_data.joystick.rawdy = value;
+			break;
+		default:
+			@throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"Event does not support delta Y" userInfo:nil];
+	}
+}
+
+- (NSInteger)absoluteDeltaZ {
+	switch (wk_type) {
+		case kWKEventAccelerometer:
+			return wk_data.acc.rawdz;
+		default:
+			@throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"Event does not support delta Z" userInfo:nil];
+	}
+}
+- (void)setAbsoluteDeltaZ:(NSUInteger)value {
+	switch (wk_type) {
+		case kWKEventAccelerometer:
+			wk_data.acc.rawdz = value;
+			break;
+		default:
+			@throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"Event does not support delta Z" userInfo:nil];
 	}
 }
 
