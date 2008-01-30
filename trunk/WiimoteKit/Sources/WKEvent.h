@@ -77,18 +77,21 @@ typedef NSUInteger WKEventSubtype;
 			CGFloat x, y, z;
 			CGFloat dx, dy, dz;
 			NSUInteger rawx, rawy, rawz;
+			NSUInteger rawdx, rawdy, rawdz;
 		} acc;
 		struct {
 			NSUInteger subtype;
 			CGFloat x;
 			CGFloat dx;
 			NSUInteger rawx;
+			NSUInteger rawdx;
 		} analog;
 		struct {
 			NSUInteger subtype;
 			CGFloat x, y;
 			CGFloat dx, dy;
 			NSUInteger rawx, rawy;
+			NSUInteger rawdx, rawdy;
 		} joystick;
 		struct {
 			// TODO
@@ -112,17 +115,21 @@ typedef NSUInteger WKEventSubtype;
 - (NSUInteger)button; // device dependant
 
 /* coord for accelerometer (x, y, z) and joystick (x, y only) */
+- (CGFloat)x;
+- (CGFloat)y;
+- (CGFloat)z;
+
 - (CGFloat)deltaX;
 - (CGFloat)deltaY;
 - (CGFloat)deltaZ;
 
-- (CGFloat)calibratedX;
-- (CGFloat)calibratedY;
-- (CGFloat)calibratedZ;
-
 - (NSInteger)absoluteX;
 - (NSInteger)absoluteY;
 - (NSInteger)absoluteZ;
+
+- (NSInteger)absoluteDeltaX;
+- (NSInteger)absoluteDeltaY;
+- (NSInteger)absoluteDeltaZ;
 
 @end
 
@@ -133,17 +140,21 @@ typedef NSUInteger WKEventSubtype;
 - (void)setStatus:(NSUInteger)aStatus;
 - (void)setButton:(NSUInteger)aButton;
 
+- (void)setX:(CGFloat)value;
+- (void)setY:(CGFloat)value;
+- (void)setZ:(CGFloat)value;
+
 - (void)setDeltaX:(CGFloat)delta;
 - (void)setDeltaY:(CGFloat)delta;
 - (void)setDeltaZ:(CGFloat)delta;
 
-- (void)setCalibratedX:(CGFloat)value;
-- (void)setCalibratedY:(CGFloat)value;
-- (void)setCalibratedZ:(CGFloat)value;
-
 - (void)setAbsoluteX:(NSUInteger)value;
 - (void)setAbsoluteY:(NSUInteger)value;
 - (void)setAbsoluteZ:(NSUInteger)value;
+
+- (void)setAbsoluteDeltaX:(NSUInteger)value;
+- (void)setAbsoluteDeltaY:(NSUInteger)value;
+- (void)setAbsoluteDeltaZ:(NSUInteger)value;
 
 @end
 

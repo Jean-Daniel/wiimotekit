@@ -34,6 +34,12 @@
 				<string>NSLevelIndicator</string>
 				<key>ibSearch</key>
 				<string>NSProgressIndicator</string>
+				<key>ibSliderX</key>
+				<string>NSSlider</string>
+				<key>ibSliderY</key>
+				<string>NSSlider</string>
+				<key>ibSliderZ</key>
+				<string>NSSlider</string>
 			</dict>
 			<key>SUPERCLASS</key>
 			<string>NSObject</string>

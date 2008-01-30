@@ -13,6 +13,8 @@
 	IBOutlet NSLevelIndicator *ibBattery;
 	IBOutlet NSProgressIndicator *ibSearch;
 	
+	IBOutlet NSSlider *ibSliderX, *ibSliderY, *ibSliderZ;
+	
 	WiiRemote *wk_wiimote;
 	
 	NSTimer *wk_funny;
