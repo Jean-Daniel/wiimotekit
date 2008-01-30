@@ -3,7 +3,7 @@
 //  WiimoteKit
 //
 //  Created by Jean-Daniel Dupas on 13/01/08.
-//  Copyright 2008 Shadow Lab.. All rights reserved.
+//  Copyright 2008 Shadow Lab. All rights reserved.
 //
 
 #import "WiiRemoteInternal.h"
@@ -170,23 +170,6 @@
 		wk_accState.rawX = event.rawx;
 		wk_accState.rawY = event.rawy;
 		wk_accState.rawZ = event.rawz;
-		
-		//		_lowZ = _lowZ * 0.9 + rawz * 0.1;
-		//		_lowX = _lowX * 0.9 + rawx * 0.1;
-		//		
-		//		CGFloat absx = fabs(_lowX - WIR_HALFRANGE);
-		//		CGFloat absz = fabs(_lowZ - WIR_HALFRANGE);
-		//		
-		//		if (orientation == 0 || orientation == 2) absx -= WIR_INTERVAL;
-		//		if (orientation == 1 || orientation == 3) absz -= WIR_INTERVAL;
-		//		
-		//		if (absz >= absx) {
-		//			if (absz > WIR_INTERVAL)
-		//				orientation = (_lowZ > WIR_HALFRANGE) ? 0 : 2;
-		//		} else {
-		//			if (absx > WIR_INTERVAL)
-		//				orientation = (_lowX > WIR_HALFRANGE) ? 3 : 1;
-		//		}
 		
 		[self sendAccelerometerEvent:&event subtype:kWKEventWiimoteAccelerometer];
 	}
