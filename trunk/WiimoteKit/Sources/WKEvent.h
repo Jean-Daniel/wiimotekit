@@ -11,6 +11,7 @@
 enum {
 	kWKEventButtonUp = 1,
 	kWKEventButtonDown,
+	
 	/* WiiRemote + nunchuk */
 	kWKEventAccelerometer,
 	
@@ -25,6 +26,13 @@ enum {
 };
 typedef NSUInteger WKEventType;
 
+enum {
+	kWKEventSourceWiiRemote = kWKExtensionNone,
+	kWKEventSourceNunchuk   = kWKExtensionNunchuk,
+	kWKEventSourceClassic   = kWKExtensionClassicController,
+};
+typedef NSUInteger WKEventSource;
+
 /* Status event subtype */
 enum {
 	kWKStatusEventLights = 1,
@@ -34,11 +42,6 @@ enum {
 	kWKStatusEventExtention,
 };
 
-/* button up/down subtype */
-enum {
-	kWKEventWiimoteButton = 1,
-	kWKEventExtensionButton,
-};
 /* joystick subtype */
 enum {
 	kWKEventLeftJoystick = 1,
@@ -49,11 +52,6 @@ enum {
 	kWKEventAnalogLeftButton = 1,
 	kWKEventAnalogRightButton,
 };
-/* accelerometer subtype */
-enum {
-	kWKEventWiimoteAccelerometer = 1,
-	kWKEventExtensionAccelerometer,
-};
 
 typedef NSUInteger WKEventSubtype;
 
@@ -62,10 +60,9 @@ typedef NSUInteger WKEventSubtype;
 @private
 	WiiRemote *wk_remote;
 	WKEventType wk_type;
-	WKExtensionType wk_extension;
+	WKEventSource wk_source;
 	union {
 		struct {
-			NSUInteger subtype;
 			NSUInteger state;
 		} button;
 		struct {
@@ -73,7 +70,6 @@ typedef NSUInteger WKEventSubtype;
 			NSUInteger value;
 		} status;
 		struct {
-			NSUInteger subtype;
 			CGFloat x, y, z;
 			CGFloat dx, dy, dz;
 			NSUInteger rawx, rawy, rawz;
@@ -99,12 +95,11 @@ typedef NSUInteger WKEventSubtype;
 	} wk_data;
 }
 
-+ (id)eventWithType:(WKEventType)aType wiimote:(WiiRemote *)aWiimote;
-- (id)initWithType:(WKEventType)aType wiimote:(WiiRemote *)aWiimote;
++ (id)eventWithType:(WKEventType)aType wiimote:(WiiRemote *)aWiimote source:(WKEventSource)source;
+- (id)initWithType:(WKEventType)aType wiimote:(WiiRemote *)aWiimote source:(WKEventSource)source;
 
 - (WiiRemote *)wiimote;
-/* if source is extension, this is the extension type */
-- (WKExtensionType)extension;
+- (WKEventSource)source;
 
 - (WKEventType)type;
 - (NSUInteger)subtype;

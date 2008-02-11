@@ -160,7 +160,7 @@ user_addr_t __WiiRemoteTranslateAddress(user_addr_t address, WKAddressSpace spac
 		}
 		
 		[self refreshReportMode];
-		[self sendStatusEvent:type subtype:kWKStatusEventExtention];
+		[self sendStatusEvent:type source:kWKEventSourceWiiRemote subtype:kWKStatusEventExtention];
 	}
 }
 
@@ -355,22 +355,15 @@ user_addr_t __WiiRemoteTranslateAddress(user_addr_t address, WKAddressSpace spac
 		[wk_delegate wiimote:self sendEvent:theEvent];
 }
 
-- (void)sendStatusEvent:(NSUInteger)value subtype:(WKEventSubtype)subtype {
-	WKEvent *event = [WKEvent eventWithType:kWKEventStatusChange wiimote:self];
+- (void)sendStatusEvent:(NSUInteger)value source:(WKEventSource)source subtype:(WKEventSubtype)subtype {
+	WKEvent *event = [WKEvent eventWithType:kWKEventStatusChange wiimote:self source:source];
 	[event setSubtype:subtype];
 	[event setStatus:value];
 	[self sendEvent:event];
 }
 
-- (void)sendButtonEvent:(NSUInteger)button subtype:(WKEventSubtype)subtype down:(BOOL)isButtonDown {
-	WKEvent *event = [WKEvent eventWithType:isButtonDown ? kWKEventButtonDown : kWKEventButtonUp wiimote:self];
-	[event setSubtype:subtype];
-	[event setButton:button];
-	[self sendEvent:event];
-}
-
-- (void)sendIREvent:(WKIREventData *)data {
-	WKEvent *event = [WKEvent eventWithType:kWKEventIRCamera wiimote:self];
+- (void)sendIREvent:(WKIREventData *)data source:(WKEventSource)source {
+	WKEvent *event = [WKEvent eventWithType:kWKEventIRCamera wiimote:self source:source];
 	WKIRPoint *points[4];
 	bzero(points, sizeof(points));
 	for (NSUInteger idx = 0; idx < 4; idx++) {
@@ -385,8 +378,8 @@ user_addr_t __WiiRemoteTranslateAddress(user_addr_t address, WKAddressSpace spac
 	[self sendEvent:event];
 }
 
-- (void)sendAnalogEvent:(WKAnalogEventData *)data subtype:(WKEventSubtype)subtype {
-	WKEvent *event = [WKEvent eventWithType:kWKEventAnalogButtonChange wiimote:self];
+- (void)sendAnalogEvent:(WKAnalogEventData *)data source:(WKEventSource)source subtype:(WKEventSubtype)subtype {
+	WKEvent *event = [WKEvent eventWithType:kWKEventAnalogButtonChange wiimote:self source:source];
 	if (subtype) [event setSubtype:subtype];
 	
 	[event setX:data->x];
@@ -398,8 +391,8 @@ user_addr_t __WiiRemoteTranslateAddress(user_addr_t address, WKAddressSpace spac
 	[self sendEvent:event];	
 }
 
-- (void)sendJoystickEvent:(WKJoystickEventData *)data subtype:(WKEventSubtype)subtype {
-	WKEvent *event = [WKEvent eventWithType:kWKEventJoystickMove wiimote:self];
+- (void)sendJoystickEvent:(WKJoystickEventData *)data source:(WKEventSource)source subtype:(WKEventSubtype)subtype {
+	WKEvent *event = [WKEvent eventWithType:kWKEventJoystickMove wiimote:self source:source];
 	if (subtype) [event setSubtype:subtype];
 
 	[event setX:data->x];
@@ -417,9 +410,9 @@ user_addr_t __WiiRemoteTranslateAddress(user_addr_t address, WKAddressSpace spac
 	[self sendEvent:event];	
 }
 
-- (void)sendAccelerometerEvent:(WKAccelerometerEventData *)data subtype:(WKEventSubtype)subtype {
-	WKEvent *event = [WKEvent eventWithType:kWKEventAccelerometer wiimote:self];
-	if (subtype) [event setSubtype:subtype];
+- (void)sendAccelerometerEvent:(WKAccelerometerEventData *)data source:(WKEventSource)source {
+	WKEvent *event = [WKEvent eventWithType:kWKEventAccelerometer wiimote:self source:source];
+	
 
 	[event setX:data->x];
 	[event setY:data->y];
@@ -438,6 +431,12 @@ user_addr_t __WiiRemoteTranslateAddress(user_addr_t address, WKAddressSpace spac
 	[event setAbsoluteDeltaZ:data->rawdz];	
 	
 	[self sendEvent:event];	
+}
+
+- (void)sendButtonEvent:(NSUInteger)button source:(WKEventSource)source down:(BOOL)isButtonDown {
+	WKEvent *event = [WKEvent eventWithType:isButtonDown ? kWKEventButtonDown : kWKEventButtonUp wiimote:self source:source];
+	[event setButton:button];
+	[self sendEvent:event];
 }
 
 @end
