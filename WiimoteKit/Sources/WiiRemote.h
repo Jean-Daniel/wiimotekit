@@ -55,36 +55,20 @@ enum {
 };
 typedef NSUInteger WKIRMode;
 
-/*!
- @struct
- @abstract Current state of the IR camera
- @field mode Current mode of IR sensor data
- @field rawX Raw midpoint of IR sensors. Values range between 0 - 1023.
- @field rawY Raw midpoint of IR sensors. Values range between 0 - 767.
- @field x Normalized midpoint of IR sensors. Values range between 0.0 - 1.0
- @field y Normalized midpoint of IR sensors. Values range between 0.0 - 1.0
- @field sensors Individual sensors values.
- */
-typedef struct _WKIRState {
-	WKIRMode mode;
-	CGFloat x, y;
-	uint16_t rawX, rawY;
-	
-	struct {
-		BOOL found; // IR sensor seen
-		uint8_t size; // Size of IR Sensor.  Values range from 0 - 15
-		CGFloat x, y; // Normalized value of X/Y-axis on individual sensor.  Values range between 0.0 - 1.0
-		uint16_t rawX, rawY; // X Values range between 0 - 1023, Y Values range between 0 - 767.
-	} sensors[4];
-} WKIRState;
-
 @class IOBluetoothDevice;
 @class WKExtension, WKConnection;
 @interface WiiRemote : NSObject {
 @private
 	id wk_delegate;
 	// Current state of IR sensors
-	WKIRState wk_irState;
+	WKIRMode wk_irMode;
+	struct _WKIData {
+		unsigned int exists:1; // IR sensor seen
+		
+		unsigned int size:4; // Size of IR Sensor.  Values range from 0 - 15
+		unsigned int rawX:10, rawY:10; // X Values range between 0 - 1023
+	} wk_irPoints[4];
+	
 	// Current state of accelerometers
 	WKAccelerationState wk_accState;
 	// Current calibration information
@@ -104,6 +88,7 @@ typedef struct _WKIRState {
 		unsigned int remoteButtons:16; /* wii remote buttons state */
 		
 		/* tracking mode */
+		unsigned int extension:1; // should listen extension
 		unsigned int continuous:1; // should track continously
 		unsigned int accelerometer:1; // should listen accelerometer
 		
@@ -151,6 +136,9 @@ typedef struct _WKIRState {
 
 - (BOOL)acceptsIRCameraEvents;
 - (void)setAcceptsIRCameraEvents:(BOOL)flag;
+
+- (BOOL)acceptsExtensionEvents;
+- (void)setAcceptsExtensionEvents:(BOOL)flag;
 
 - (BOOL)acceptsAccelerometerEvents;
 - (void)setAcceptsAccelerometerEvents:(BOOL)flag;

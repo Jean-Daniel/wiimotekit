@@ -208,21 +208,21 @@ user_addr_t __WiiRemoteTranslateAddress(user_addr_t address, WKAddressSpace spac
 		
 		/* wiimote accelerometer */
 		if (wk_wiiFlags.accelerometer) {
-			if (wk_extension && wk_irState.mode != kWKIRModeOff) {
+			if (wk_extension && wk_irMode != kWKIRModeOff) {
 				cmd[2] = kWKInputReportAll;
-			} else if (wk_extension) {
+			} else if (wk_extension && wk_wiiFlags.extension) {
 				cmd[2] = kWKInputReportAccelerometerExtension;
 			} else {
 				cmd[2] = kWKInputReportAccelerometer;
 			}
-		} else if (wk_irState.mode != kWKIRModeOff) {
-			if (wk_extension) {
+		} else if (wk_irMode != kWKIRModeOff) {
+			if (wk_extension && wk_wiiFlags.extension) {
 				cmd[2] = kWKInputReportIRExtension;
 			} else {
 				/* IR only does not exists (and does not have sense) */
 				cmd[2] = kWKInputReportAccelerometerIR;
 			}
-		} else if (wk_extension) {
+		} else if (wk_extension && wk_wiiFlags.extension) {
 			cmd[2] = kWKInputReportExtension;
 		}
 		err = [self sendCommand:cmd length:3];
@@ -274,20 +274,20 @@ user_addr_t __WiiRemoteTranslateAddress(user_addr_t address, WKAddressSpace spac
 }
 
 - (WKIRMode)irMode {
-	return wk_irState.mode;
+	return wk_irMode;
 }
 - (IOReturn)setIrMode:(WKIRMode)aMode {
-	if (aMode != wk_irState.mode) {
+	if (aMode != wk_irMode) {
 		if (aMode == kWKIRModeOff) {
 			if (wk_wiiFlags.irInit) {
 				wk_wiiFlags.irAbort = 1;
 			} else {
-				wk_irState.mode = aMode;
+				wk_irMode = aMode;
 				[self __stopIRCamera];
 			}
 		} else {
 			/* if was previously off, we have to start it */
-			if (wk_irState.mode == kWKIRModeOff) {
+			if (wk_irMode == kWKIRModeOff) {
 				if (!wk_wiiFlags.irInit) {
 					wk_wiiFlags.irInit = 1;
 					/* start ir sensor */
@@ -297,11 +297,11 @@ user_addr_t __WiiRemoteTranslateAddress(user_addr_t address, WKAddressSpace spac
 										space:kWKMemorySpaceIRCamera next:@selector(didStartIRCamera:)];
 					/* following operation are done in the data send callback */
 				}
-				wk_irState.mode = aMode;
+				wk_irMode = aMode;
 			}  else {
 				/* set mode */
 				[self writeData:(const uint8_t[]){ aMode } length:1 atAddress:IR_REGISTER_MODE space:kWKMemorySpaceIRCamera next:nil];
-				wk_irState.mode = aMode;
+				wk_irMode = aMode;
 				[self refreshReportMode];
 			}
 		}
@@ -338,7 +338,7 @@ user_addr_t __WiiRemoteTranslateAddress(user_addr_t address, WKAddressSpace spac
 	if (wk_wiiFlags.irAbort) {
 		[self __stopIRCamera];
 	} else {
-		[self writeData:(const uint8_t[]){ wk_irState.mode } length:1 atAddress:IR_REGISTER_MODE
+		[self writeData:(const uint8_t[]){ wk_irMode } length:1 atAddress:IR_REGISTER_MODE
 							space:kWKMemorySpaceIRCamera next:nil];
 		[self refreshReportMode];
 		wk_wiiFlags.irInit = 0;
@@ -366,6 +366,22 @@ user_addr_t __WiiRemoteTranslateAddress(user_addr_t address, WKAddressSpace spac
 	WKEvent *event = [WKEvent eventWithType:isButtonDown ? kWKEventButtonDown : kWKEventButtonUp wiimote:self];
 	[event setSubtype:subtype];
 	[event setButton:button];
+	[self sendEvent:event];
+}
+
+- (void)sendIREvent:(WKIREventData *)data {
+	WKEvent *event = [WKEvent eventWithType:kWKEventIRCamera wiimote:self];
+	WKIRPoint *points[4];
+	bzero(points, sizeof(points));
+	for (NSUInteger idx = 0; idx < 4; idx++) {
+		if (data->points[idx].exists) {
+			points[idx] = [[WKIRPoint alloc] initWithSize:data->points[idx].size 
+																					absoluteX:data->points[idx].rawx
+																					absoluteY:data->points[idx].rawy];
+			[points[idx] autorelease];
+		}
+	}
+	[event setPoints:points count:4];
 	[self sendEvent:event];
 }
 

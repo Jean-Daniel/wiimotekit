@@ -146,6 +146,23 @@
 }
 
 #pragma mark -
+#pragma mark Infra Red
+- (WKIRPoint **)points {
+	NSParameterAssert(wk_type == kWKEventIRCamera);
+	return wk_data.ir.points;
+}
+
+- (NSUInteger)numberOfPoints {
+	NSParameterAssert(wk_type == kWKEventIRCamera);
+	return 4;
+}
+
+- (void)setPoints:(WKIRPoint **)points count:(NSUInteger)count {
+	NSParameterAssert(wk_type == kWKEventIRCamera);
+	NSParameterAssert(count == 4);
+	memcpy(wk_data.ir.points, points, count * sizeof(*points));
+}
+
 #pragma mark Calibrated
 - (CGFloat)x {
 	switch (wk_type) {
@@ -425,3 +442,38 @@
 }
 
 @end
+
+#pragma mark -
+@implementation WKIRPoint
+
+- (id)initWithSize:(NSUInteger)size absoluteX:(NSUInteger)x absoluteY:(NSUInteger)y {
+	if (self = [super init]) {
+		wk_size = size;
+		wk_rawx = x;
+		wk_rawy = y;
+	}
+	return self;
+}
+
+- (NSUInteger)size {
+	return wk_size;
+}
+
+- (CGFloat)x {
+	return wk_rawx / 1023.;
+}
+- (CGFloat)y {
+	return wk_rawy / 767.;
+}
+
+- (NSUInteger)absoluteX {
+	return wk_rawx;
+}
+
+- (NSUInteger)absoluteY {
+	return wk_rawy;
+}
+
+@end
+
+

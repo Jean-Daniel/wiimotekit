@@ -117,12 +117,21 @@ int main(int argc, const char **argv) {
 }
 
 - (void)wiimoteDidConnect:(WiiRemote *)aRemote {
-	
+	[wk_wiimote setAcceptsExtensionEvents:NO];
 }
 
 - (void)wiimoteDidDisconnect:(WiiRemote *)aRemote {
 	[wk_wiimote release];
 	wk_wiimote = nil;
+}
+
+- (void)handleIREvent:(WKEvent *)anEvent {
+	fprintf(stderr, "--\n");
+	WKIRPoint **points = [anEvent points];
+	for (NSUInteger idx = 0; idx < [anEvent numberOfPoints]; idx++) {
+		if (points[idx])
+			NSLog(@"ir point %lu: %@", idx, points[idx]);
+	}
 }
 
 - (void)handleStatusEvent:(WKEvent *)anEvent {
@@ -145,6 +154,9 @@ int main(int argc, const char **argv) {
 
 - (void)wiimote:(WiiRemote *)aRemote sendEvent:(WKEvent *)anEvent {
 	switch ([anEvent type]) {
+		case kWKEventIRCamera:
+			[self handleIREvent:anEvent];
+			break;
 		case kWKEventStatusChange:
 			[self handleStatusEvent:anEvent];
 			break;
