@@ -57,7 +57,7 @@ enum {
 
 typedef NSUInteger WKEventSubtype;
 
-@class WiiRemote;
+@class WKIRPoint, WiiRemote;
 @interface WKEvent : NSObject {
 @private
 	WiiRemote *wk_remote;
@@ -94,7 +94,7 @@ typedef NSUInteger WKEventSubtype;
 			NSUInteger rawdx, rawdy;
 		} joystick;
 		struct {
-			// TODO
+			WKIRPoint *points[4];
 		} ir;
 	} wk_data;
 }
@@ -131,6 +131,28 @@ typedef NSUInteger WKEventSubtype;
 - (NSInteger)absoluteDeltaY;
 - (NSInteger)absoluteDeltaZ;
 
+/* IR events */
+- (WKIRPoint **)points;
+- (NSUInteger)numberOfPoints; // max number of point (actually, always return 4)
+
+@end
+
+@interface WKIRPoint : NSObject {
+	UInt8 wk_size;
+	
+	UInt16 wk_rawx, wk_rawy;
+}
+
+- (id)initWithSize:(NSUInteger)size absoluteX:(NSUInteger)x absoluteY:(NSUInteger)y;
+
+- (NSUInteger)size;
+
+- (CGFloat)x;
+- (CGFloat)y;
+
+- (NSUInteger)absoluteX;
+- (NSUInteger)absoluteY;
+
 @end
 
 @interface WKEvent (WKEventPrivate)
@@ -155,6 +177,8 @@ typedef NSUInteger WKEventSubtype;
 - (void)setAbsoluteDeltaX:(NSUInteger)value;
 - (void)setAbsoluteDeltaY:(NSUInteger)value;
 - (void)setAbsoluteDeltaZ:(NSUInteger)value;
+
+- (void)setPoints:(WKIRPoint **)points count:(NSUInteger)count;
 
 @end
 

@@ -268,6 +268,7 @@ enum {
 			WKLog(@"Control closed!");
 			bool opening = wk_status == kWKConnectionStatusOpening;
 			wk_status = kWKConnectionStatusClosed;
+			[wk_control setDelegate:nil];
 			[wk_control release];
 			wk_control = nil;
 			
@@ -289,12 +290,14 @@ enum {
 			if ([wk_backup count] > 0) { WKLog(@"connection closed but waiting %u acks.", [wk_backup count]); }
 			break;
 		case kBluetoothL2CAPPSMHIDInterrupt:
+			[self retain]; // delegate may release the last reference
 			wk_status = kWKConnectionStatusError; // prevent control reconnection
 			if ([wk_delegate respondsToSelector:@selector(connectionDidClose:)]) {
 				[wk_delegate connectionDidClose:self];
 			}
 			WKLog(@"Interrupt closed!");
 			[self cleanup];
+			[self release];
 			break;
 	}
 }

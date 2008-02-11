@@ -25,7 +25,7 @@
 		} else {
 			/* default value */
 			wk_wiiFlags.leds = 0x1f;
-			
+			wk_wiiFlags.extension = 1; // listen extension by default.
 			[wk_connection setDelegate:self];
 		}
 	}
@@ -110,15 +110,26 @@
 
 - (void)setAcceptsIRCameraEvents:(BOOL)flag {
 	IOReturn err = kIOReturnSuccess;
-	if (!flag && wk_irState.mode != kWKIRModeOff) {
+	if (!flag && wk_irMode != kWKIRModeOff) {
 		err = [self setIrMode:kWKIRModeOff];
-	} else if (flag && wk_irState.mode == kWKIRModeOff) {
+	} else if (flag && wk_irMode == kWKIRModeOff) {
 		if (!wk_extension)
 			err = [self setIrMode:kWKIRModeExtended];
 		else
 			err = [self setIrMode:kWKIRModeBasic];
 	}
 	WKPrintIOReturn(err, "setAcceptsIRCameraEvents");
+}
+
+- (BOOL)acceptsExtensionEvents {
+	return wk_wiiFlags.extension;
+}
+- (void)setAcceptsExtensionEvents:(BOOL)accept {
+	bool flag = accept ? 1 : 0;
+	if (wk_wiiFlags.extension != flag) {
+		wk_wiiFlags.extension = flag;
+		[self refreshReportMode];
+	}
 }
 
 - (BOOL)acceptsAccelerometerEvents {

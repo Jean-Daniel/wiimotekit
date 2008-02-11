@@ -100,6 +100,14 @@ enum WKInputReport {
 @end
 
 typedef struct {
+	struct {
+		bool exists;
+		uint8_t size;
+		uint16_t rawx, rawy;
+	} points[4];
+} WKIREventData;
+
+typedef struct {
 	CGFloat x, y, z;
 	CGFloat dx, dy, dz;
 	NSUInteger rawx, rawy, rawz;
@@ -128,8 +136,11 @@ typedef struct {
 
 - (void)sendButtonEvent:(NSUInteger)button subtype:(WKEventSubtype)subtype down:(BOOL)isButtonDown;
 
+- (void)sendIREvent:(WKIREventData *)data;
+
 - (void)sendAnalogEvent:(WKAnalogEventData *)data subtype:(WKEventSubtype)subtype;
 - (void)sendJoystickEvent:(WKJoystickEventData *)data subtype:(WKEventSubtype)subtype;
 - (void)sendAccelerometerEvent:(WKAccelerometerEventData *)data subtype:(WKEventSubtype)subtype;
+
 
 @end

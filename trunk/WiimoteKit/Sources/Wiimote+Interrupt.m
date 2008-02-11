@@ -176,63 +176,54 @@
 }
 
 - (void)parseIRCamera:(const uint8_t *)data range:(NSRange)range {
-	NSLog(@"%@%lu", NSStringFromSelector(_cmd), (long)range.length);
-	wk_irState.sensors[0].rawX = data[range.location]  | ((data[range.location + 2] >> 4) & 0x03) << 8;
-	wk_irState.sensors[0].rawY = data[range.location + 1]  | ((data[range.location + 2] >> 6) & 0x03) << 8;
+	WKIREventData event;
+	bzero(&event, sizeof(event));
+	
+	const uint8_t *irdata = data + range.location;
 	
 	switch(range.length) {
 		case 10:
-			wk_irState.sensors[1].rawX = data[range.location + 3]  | ((data[range.location + 2] >> 0) & 0x03) << 8;
-			wk_irState.sensors[1].rawY = data[range.location + 4] | ((data[range.location + 2] >> 2) & 0x03) << 8;
+			event.points[0].rawx = irdata[0]  | ((irdata[2] >> 4) & 0x03) << 8;
+			event.points[0].rawy = irdata[1]  | ((irdata[2] >> 6) & 0x03) << 8;
 			
-			wk_irState.sensors[0].size = 0x00;
-			wk_irState.sensors[1].size = 0x00;
+			event.points[1].rawx = irdata[3]  | ((irdata[2] >> 0) & 0x03) << 8;
+			event.points[1].rawy = irdata[4] | ((irdata[2] >> 2) & 0x03) << 8;
 			
-			wk_irState.sensors[0].found = !(data[range.location] == 0xff && data[range.location + 1] == 0xff);
-			wk_irState.sensors[1].found = !(data[range.location + 3] == 0xff && data[range.location + 4] == 0xff);
+			event.points[0].size = 0x07;
+			event.points[1].size = 0x07;
+			
+			/* to improve */
+			event.points[0].exists = !(irdata[0] == 0xff && irdata[1] == 0xff);
+			event.points[1].exists = !(irdata[3] == 0xff && irdata[4] == 0xff);
 			break;
 		case 12:
-			wk_irState.sensors[1].rawX = data[9]  | ((data[11] >> 4) & 0x03) << 8;
-			wk_irState.sensors[1].rawY = data[10] | ((data[11] >> 6) & 0x03) << 8;
-			
-			wk_irState.sensors[0].size = data[8] & 0x0f;
-			wk_irState.sensors[1].size = data[11] & 0x0f;
-			
-			wk_irState.sensors[0].found = !(data[6] == 0xff && data[7] == 0xff && data[8] == 0xff);
-			wk_irState.sensors[1].found = !(data[9] == 0xff && data[10] == 0xff && data[11] == 0xff);
-			
-			//a guess based on the structure of the 1st 2 dots
-			wk_irState.sensors[2].rawX = data[12] | ((data[14] >> 4) & 0x03) << 8;
-			wk_irState.sensors[2].rawY = data[13] | ((data[14] >> 6) & 0x03) << 8;
-			wk_irState.sensors[2].size = data[14] & 0x0f;
-			wk_irState.sensors[2].found = !(data[12] == 0xff && data[13] == 0xff && data[14] == 0xff);
-			
-			wk_irState.sensors[3].rawX = data[15] | ((data[17] >> 4) & 0x03) << 8;
-			wk_irState.sensors[3].rawY = data[16] | ((data[17] >> 6) & 0x03) << 8;
-			wk_irState.sensors[3].size = data[17] & 0x0f;
-			wk_irState.sensors[3].found = !(data[15] == 0xff && data[16] == 0xff && data[17] == 0xff);
-			
+			for (NSUInteger idx = 0; idx < 4; idx++) {
+				const uint8_t *pdata = irdata + (idx * 3);
+				if (pdata[0] != 0xff || pdata[1] != 0xff || pdata[2] != 0xff) {
+					event.points[idx].exists = true;
+					event.points[idx].size = pdata[2] & 0x0f;
+					event.points[idx].rawx = pdata[0]  | ((pdata[2] >> 4) & 0x03) << 8;
+					event.points[idx].rawy = pdata[1]  | ((pdata[2] >> 6) & 0x03) << 8;
+				} else {
+					event.points[idx].exists = false;
+				}
+			}
 			break;
 		default:
 			WKLog(@"Unsupported IR Camera mode: %u bytes report", range.length);
 			return;
 	}
 	
+	/* save IR sate in Wiimote */
 	for (NSUInteger idx = 0; idx < 4; idx++) {
-		wk_irState.sensors[idx].x = wk_irState.sensors[idx].rawX / 1023.5;
-		wk_irState.sensors[idx].y = wk_irState.sensors[idx].rawY / 767.5;
-	}
-
-	
-	if(wk_irState.sensors[0].found && wk_irState.sensors[1].found) {
-		wk_irState.rawX = (wk_irState.sensors[0].rawX + wk_irState.sensors[1].rawX) / 2;
-		wk_irState.rawY = (wk_irState.sensors[0].rawY + wk_irState.sensors[1].rawY) / 2;
+		wk_irPoints[idx].exists = event.points[idx].exists ? 1 : 0;
 		
-		wk_irState.x = (wk_irState.sensors[0].x + wk_irState.sensors[1].x) / 2.;
-		wk_irState.y = (wk_irState.sensors[0].y + wk_irState.sensors[1].y) / 2.;
-	} else {
-		wk_irState.x = wk_irState.y = 0;
+		wk_irPoints[idx].size = event.points[idx].size ? 1 : 0;
+		wk_irPoints[idx].rawX = event.points[idx].rawx ? 1 : 0;
+		wk_irPoints[idx].rawY = event.points[idx].rawy ? 1 : 0;
 	}
+	/* send event */
+	[self sendIREvent:&event];
 }
 
 - (void)parserWriteAck:(const uint8_t *)data length:(size_t)length {
