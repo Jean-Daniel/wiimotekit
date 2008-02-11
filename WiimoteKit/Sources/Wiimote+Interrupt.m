@@ -39,7 +39,7 @@
 				bool before = wk_wiiFlags.remoteButtons & flag;
 				bool after = state & flag;
 				if ((before && !after) || (!before && after)) {
-					[self sendButtonEvent:flag subtype:kWKEventWiimoteButton down:before];
+					[self sendButtonEvent:flag source:kWKEventSourceWiiRemote down:before];
 				}
 			}
 		}
@@ -62,7 +62,7 @@
 	bool speaker = (data[0] & 0x04) != 0;
 	if (speaker != wk_wiiFlags.speaker) {
 		wk_wiiFlags.speaker = speaker;
-		[self sendStatusEvent:wk_wiiFlags.speaker subtype:kWKStatusEventSpeaker];
+		[self sendStatusEvent:wk_wiiFlags.speaker source:kWKEventSourceWiiRemote subtype:kWKStatusEventSpeaker];
 	}
 
 	bool continuous = (data[0] & 0x08) != 0;
@@ -75,14 +75,14 @@
 	WKLEDState state = (data[0] >> 4) & 0xf;
 	if (state != wk_wiiFlags.leds) {
 		wk_wiiFlags.leds = state;
-		[self sendStatusEvent:wk_wiiFlags.leds subtype:kWKStatusEventLights];
+		[self sendStatusEvent:wk_wiiFlags.leds source:kWKEventSourceWiiRemote subtype:kWKStatusEventLights];
 	}
 	
 	/* check battery level */
 	uint8_t battery = data[3];
 	if (battery != wk_wiiFlags.battery) {
 		wk_wiiFlags.battery = battery;
-		[self sendStatusEvent:wk_wiiFlags.battery subtype:kWKStatusEventBattery];
+		[self sendStatusEvent:wk_wiiFlags.battery source:kWKEventSourceWiiRemote subtype:kWKStatusEventBattery];
 	}
 }
 
@@ -171,7 +171,7 @@
 		wk_accState.rawY = event.rawy;
 		wk_accState.rawZ = event.rawz;
 		
-		[self sendAccelerometerEvent:&event subtype:kWKEventWiimoteAccelerometer];
+		[self sendAccelerometerEvent:&event source:kWKEventSourceWiiRemote];
 	}
 }
 
@@ -223,7 +223,7 @@
 		wk_irPoints[idx].rawY = event.points[idx].rawy ? 1 : 0;
 	}
 	/* send event */
-	[self sendIREvent:&event];
+	[self sendIREvent:&event source:kWKEventSourceWiiRemote];
 }
 
 - (void)parserWriteAck:(const uint8_t *)data length:(size_t)length {

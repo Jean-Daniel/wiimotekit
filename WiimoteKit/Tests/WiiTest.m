@@ -125,7 +125,7 @@ int main(int argc, const char **argv) {
 	wk_wiimote = nil;
 }
 
-- (void)handleIREvent:(WKEvent *)anEvent {
+- (void)handleWiimoteIREvent:(WKEvent *)anEvent {
 	fprintf(stderr, "--\n");
 	WKIRPoint **points = [anEvent points];
 	for (NSUInteger idx = 0; idx < [anEvent numberOfPoints]; idx++) {
@@ -134,7 +134,20 @@ int main(int argc, const char **argv) {
 	}
 }
 
-- (void)handleStatusEvent:(WKEvent *)anEvent {
+- (void)handleWiimoteButton:(WKEvent *)anEvent down:(BOOL)pressed {
+	NSString *action = pressed ? @"down" : @"up";
+	switch ([anEvent button]) {
+		case kWKWiiRemoteButtonA:
+			NSLog(@"Wiimote A %@", action);
+			break;
+		case kWKWiiRemoteButtonB:
+			NSLog(@"Wiimote A %@", action);
+			break;
+			// ... other buttons
+	}
+}
+
+- (void)handleWiimoteStatusEvent:(WKEvent *)anEvent {
 	switch ([anEvent subtype]) {
 		case kWKStatusEventBattery:
 			[ibBattery setDoubleValue:[anEvent status] * 100. / 0xc0];
@@ -142,26 +155,43 @@ int main(int argc, const char **argv) {
 	}
 }
 
-- (void)handleAccelerometerEvent:(WKEvent *)anEvent {
-	switch ([anEvent subtype]) {
-		case kWKEventWiimoteAccelerometer:
-			[ibSliderX setDoubleValue:[anEvent absoluteX]];
-			[ibSliderY setDoubleValue:[anEvent absoluteY]];
-			[ibSliderZ setDoubleValue:[anEvent absoluteZ]];
+- (void)handleWiimoteAccelerometerEvent:(WKEvent *)anEvent {
+	[ibSliderX setDoubleValue:[anEvent absoluteX]];
+	[ibSliderY setDoubleValue:[anEvent absoluteY]];
+	[ibSliderZ setDoubleValue:[anEvent absoluteZ]];
+}
+
+- (void)handleWiimoteEvent:(WKEvent *)anEvent {
+	switch ([anEvent type]) {
+		case kWKEventIRCamera:
+			[self handleWiimoteIREvent:anEvent];
+			break;
+		case kWKEventButtonUp:
+			[self handleWiimoteButton:anEvent down:NO];
+			break;
+		case kWKEventButtonDown:
+			[self handleWiimoteButton:anEvent down:YES];
+			break;
+		case kWKEventStatusChange:
+			[self handleWiimoteStatusEvent:anEvent];
+			break;
+		case kWKEventAccelerometer:
+			[self handleWiimoteAccelerometerEvent:anEvent];
 			break;
 	}
 }
 
+- (void)handleNunchukEvent:(WKEvent *)anEvent {
+	// ...
+}
+
 - (void)wiimote:(WiiRemote *)aRemote sendEvent:(WKEvent *)anEvent {
-	switch ([anEvent type]) {
-		case kWKEventIRCamera:
-			[self handleIREvent:anEvent];
+	switch ([anEvent source]) {
+		case kWKEventSourceWiiRemote:
+			[self handleWiimoteEvent:anEvent];
 			break;
-		case kWKEventStatusChange:
-			[self handleStatusEvent:anEvent];
-			break;
-		case kWKEventAccelerometer:
-			[self handleAccelerometerEvent:anEvent];
+		case kWKEventSourceNunchuk:
+			[self handleNunchukEvent:anEvent];
 			break;
 	}
 }

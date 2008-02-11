@@ -29,7 +29,7 @@
 				bool before = wk_buttons & flag;
 				bool after = buttons & flag;
 				if ((before && !after) || (!before && after)) {
-					[[self wiiRemote] sendButtonEvent:flag subtype:kWKEventExtensionButton down:before];
+					[[self wiiRemote] sendButtonEvent:flag source:kWKEventSourceClassic down:before];
 				}
 			}
 		}
@@ -62,7 +62,7 @@
 		wk_rawXL = event.rawx;
 		wk_rawYL = event.rawy;
 		
-		[[self wiiRemote] sendJoystickEvent:&event subtype:kWKEventRightJoystick];
+		[[self wiiRemote] sendJoystickEvent:&event source:kWKEventSourceClassic subtype:kWKEventRightJoystick];
 	}
 	
 	/* right joystick */
@@ -87,7 +87,7 @@
 		wk_rawXR = event.rawx;
 		wk_rawYR = event.rawy;
 		
-		[[self wiiRemote] sendJoystickEvent:&event subtype:kWKEventRightJoystick];
+		[[self wiiRemote] sendJoystickEvent:&event source:kWKEventSourceClassic subtype:kWKEventRightJoystick];
 	}
 	
 	/* L and R */
@@ -109,7 +109,7 @@
 		wk_tl = event.x;
 		wk_rawTL = event.rawx;
 		
-		[[self wiiRemote] sendAnalogEvent:&event subtype:kWKEventAnalogLeftButton];
+		[[self wiiRemote] sendAnalogEvent:&event source:kWKEventSourceClassic subtype:kWKEventAnalogLeftButton];
 	}
 	
 	value = tmp[3] & 0x1f;
@@ -129,7 +129,7 @@
 		wk_tr = event.x;
 		wk_rawTR = event.rawx;
 		
-		[[self wiiRemote] sendAnalogEvent:&event subtype:kWKEventAnalogRightButton];
+		[[self wiiRemote] sendAnalogEvent:&event source:kWKEventSourceClassic subtype:kWKEventAnalogRightButton];
 	}
 }
 

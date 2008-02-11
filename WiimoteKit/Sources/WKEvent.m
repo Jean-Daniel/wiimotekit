@@ -12,18 +12,18 @@
 
 @implementation WKEvent
 
-+ (id)eventWithType:(WKEventType)aType wiimote:(WiiRemote *)aWiimote {
-	return [[[self alloc] initWithType:aType wiimote:aWiimote] autorelease];
++ (id)eventWithType:(WKEventType)aType wiimote:(WiiRemote *)aWiimote source:(WKEventSource)source {
+	return [[[self alloc] initWithType:aType wiimote:aWiimote source:source] autorelease];
 }
 
-- (id)initWithType:(WKEventType)aType wiimote:(WiiRemote *)aWiimote {
+- (id)initWithType:(WKEventType)aType wiimote:(WiiRemote *)aWiimote source:(WKEventSource)source {
 	NSParameterAssert(aType);
 	NSParameterAssert(aWiimote);
 	
 	if (self = [super init]) {
 		wk_type = aType;
+		wk_source = source;
 		wk_remote = [aWiimote retain];
-		wk_extension = [[aWiimote extension] type];
 	}
 	return self;
 }
@@ -72,7 +72,7 @@
 			return YES;
 		case kWKEventJoystickMove:
 		case kWKEventAnalogButtonChange:
-			return wk_extension == kWKExtensionClassicController;
+			return wk_source == kWKEventSourceClassic;
 	}
 	return NO;
 }
@@ -80,8 +80,11 @@
 - (WiiRemote *)wiimote {
 	return wk_remote;
 }
-- (WKExtensionType)extension {
-	return wk_extension;
+- (WKEventSource)source {
+	return wk_source;
+}
+- (void)setSource:(WKEventSource)aSource {
+	wk_source = aSource;
 }
 
 - (WKEventType)type {
@@ -91,13 +94,8 @@
 - (NSUInteger)subtype {
 	NSParameterAssert([self __supportSubtype]);
 	switch (wk_type) {
-		case kWKEventButtonUp:
-		case kWKEventButtonDown:
-			return wk_data.button.subtype;
 		case kWKEventStatusChange:
 			return wk_data.status.subtype;
-		case kWKEventAccelerometer:
-			return wk_data.acc.subtype;
 		case kWKEventJoystickMove:
 			return wk_data.joystick.subtype;
 		case kWKEventAnalogButtonChange:
@@ -108,15 +106,8 @@
 - (void)setSubtype:(WKEventSubtype)aSubtype {
 	NSParameterAssert([self __supportSubtype]);
 	switch (wk_type) {
-		case kWKEventButtonUp:
-		case kWKEventButtonDown:
-			wk_data.button.subtype = aSubtype;
-			break;
 		case kWKEventStatusChange:
 			wk_data.status.subtype = aSubtype;
-			break;
-		case kWKEventAccelerometer:
-			wk_data.acc.subtype = aSubtype;
 			break;
 		case kWKEventJoystickMove:
 			wk_data.joystick.subtype = aSubtype;

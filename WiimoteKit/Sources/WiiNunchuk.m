@@ -25,13 +25,13 @@
 	bool button = (buttons & 0x02) == 0;
 	if (wk_wnFlags.c != button) {
 		wk_wnFlags.c = button;
-		[[self wiiRemote] sendButtonEvent:kWKNunchukButtonC subtype:kWKEventExtensionButton down:button];
+		[[self wiiRemote] sendButtonEvent:kWKNunchukButtonC source:kWKEventSourceNunchuk down:button];
 	}
 	
 	button = (buttons & 0x01) == 0;
 	if (wk_wnFlags.z != button) {
 		wk_wnFlags.z = button;
-		[[self wiiRemote] sendButtonEvent:kWKNunchukButtonZ subtype:kWKEventExtensionButton down:button];
+		[[self wiiRemote] sendButtonEvent:kWKNunchukButtonZ source:kWKEventSourceNunchuk down:button];
 	}
 	
 	/* Joystick */
@@ -62,7 +62,7 @@
 		wk_rawX = event.rawx;
 		wk_rawY = event.rawy;
 		
-		[[self wiiRemote] sendJoystickEvent:&event subtype:0];
+		[[self wiiRemote] sendJoystickEvent:&event source:kWKEventSourceNunchuk subtype:0];
 	}
 	
 	/* Accelerometer */
@@ -101,7 +101,7 @@
 		wk_acc.rawY = event.rawy;
 		wk_acc.rawZ = event.rawz;
 		
-		[[self wiiRemote] sendAccelerometerEvent:&event subtype:kWKEventExtensionAccelerometer];
+		[[self wiiRemote] sendAccelerometerEvent:&event source:kWKEventSourceNunchuk];
 	}
 }
 

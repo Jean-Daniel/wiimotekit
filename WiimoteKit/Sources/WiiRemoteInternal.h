@@ -132,15 +132,14 @@ typedef struct {
 
 - (void)sendEvent:(WKEvent *)theEvent;
 
-- (void)sendStatusEvent:(NSUInteger)value subtype:(WKEventSubtype)subtype;
+- (void)sendIREvent:(WKIREventData *)data source:(WKEventSource)source;
 
-- (void)sendButtonEvent:(NSUInteger)button subtype:(WKEventSubtype)subtype down:(BOOL)isButtonDown;
+- (void)sendAccelerometerEvent:(WKAccelerometerEventData *)data source:(WKEventSource)source;
+- (void)sendButtonEvent:(NSUInteger)button source:(WKEventSource)source down:(BOOL)isButtonDown;
 
-- (void)sendIREvent:(WKIREventData *)data;
+- (void)sendStatusEvent:(NSUInteger)value source:(WKEventSource)source subtype:(WKEventSubtype)subtype;
 
-- (void)sendAnalogEvent:(WKAnalogEventData *)data subtype:(WKEventSubtype)subtype;
-- (void)sendJoystickEvent:(WKJoystickEventData *)data subtype:(WKEventSubtype)subtype;
-- (void)sendAccelerometerEvent:(WKAccelerometerEventData *)data subtype:(WKEventSubtype)subtype;
-
+- (void)sendAnalogEvent:(WKAnalogEventData *)data source:(WKEventSource)source subtype:(WKEventSubtype)subtype;
+- (void)sendJoystickEvent:(WKJoystickEventData *)data source:(WKEventSource)source subtype:(WKEventSubtype)subtype;
 
 @end
