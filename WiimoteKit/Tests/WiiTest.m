@@ -118,6 +118,7 @@ int main(int argc, const char **argv) {
 
 - (void)wiimoteDidConnect:(WiiRemote *)aRemote {
 	[wk_wiimote setAcceptsExtensionEvents:NO];
+	[wk_wiimote setLeds:0x1];
 }
 
 - (void)wiimoteDidDisconnect:(WiiRemote *)aRemote {
