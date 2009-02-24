@@ -38,6 +38,8 @@
 		1BCB00FA0D3979BD0002B8D5 /* IOBluetooth.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1BCB007F0D3968660002B8D5 /* IOBluetooth.framework */; };
 		8DC2EF530486A6940098B216 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 089C1666FE841158C02AAC07 /* InfoPlist.strings */; };
 		8DC2EF570486A6940098B216 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1058C7B1FEA5585E11CA2CBB /* Cocoa.framework */; };
+		91FD8CF30F53F7D200A6514B /* WKClassicTypeExtension.h in Headers */ = {isa = PBXBuildFile; fileRef = 91FD8CF10F53F7D200A6514B /* WKClassicTypeExtension.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		91FD8CF40F53F7D200A6514B /* WKClassicTypeExtension.m in Sources */ = {isa = PBXBuildFile; fileRef = 91FD8CF20F53F7D200A6514B /* WKClassicTypeExtension.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -86,6 +88,9 @@
 		32DBCF5E0370ADEE00C91783 /* WiimoteKit_Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WiimoteKit_Prefix.pch; sourceTree = "<group>"; };
 		8DC2EF5A0486A6940098B216 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		8DC2EF5B0486A6940098B216 /* WiimoteKit.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = WiimoteKit.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		91FD8CF10F53F7D200A6514B /* WKClassicTypeExtension.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WKClassicTypeExtension.h; sourceTree = "<group>"; };
+		91FD8CF20F53F7D200A6514B /* WKClassicTypeExtension.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = WKClassicTypeExtension.m; sourceTree = "<group>"; };
+		91FD8D630F53F89F00A6514B /* WiimoteKit.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; path = WiimoteKit.xcconfig; sourceTree = "<group>"; };
 		D2F7E79907B2D74100F64583 /* CoreData.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreData.framework; path = /System/Library/Frameworks/CoreData.framework; sourceTree = "<absolute>"; };
 /* End PBXFileReference section */
 
@@ -149,6 +154,7 @@
 		089C1665FE841158C02AAC07 /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				91FD8D630F53F89F00A6514B /* WiimoteKit.xcconfig */,
 				8DC2EF5A0486A6940098B216 /* Info.plist */,
 				089C1666FE841158C02AAC07 /* InfoPlist.strings */,
 			);
@@ -193,10 +199,12 @@
 		1B7903670D3D776700C0A0AD /* Extensions */ = {
 			isa = PBXGroup;
 			children = (
-				1B7903620D3D775B00C0A0AD /* WiiClassic.h */,
-				1B7903630D3D775B00C0A0AD /* WiiClassic.m */,
 				1B7902C70D3D48E100C0A0AD /* WiiNunchuk.h */,
 				1B7902C80D3D48E100C0A0AD /* WiiNunchuk.m */,
+				1B7903620D3D775B00C0A0AD /* WiiClassic.h */,
+				1B7903630D3D775B00C0A0AD /* WiiClassic.m */,
+				91FD8CF10F53F7D200A6514B /* WKClassicTypeExtension.h */,
+				91FD8CF20F53F7D200A6514B /* WKClassicTypeExtension.m */,
 				1B7903680D3D777900C0A0AD /* WKExtension.h */,
 				1B7903690D3D777900C0A0AD /* WKExtension.m */,
 			);
@@ -254,6 +262,7 @@
 				1B7750780D3E8847009518CB /* WiiRemoteInternal.h in Headers */,
 				1B72A86A0D4011BB006F30B8 /* WKEvent.h in Headers */,
 				1B41D6120D4DD66E00C047EC /* WKBase.h in Headers */,
+				91FD8CF30F53F7D200A6514B /* WKClassicTypeExtension.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -359,6 +368,7 @@
 				1B7751180D3EA354009518CB /* WiiNunchuk.m in Sources */,
 				1B72A86B0D4011BB006F30B8 /* WKEvent.m in Sources */,
 				1B72A92C0D4027E5006F30B8 /* Wiimote+Speaker.m in Sources */,
+				91FD8CF40F53F7D200A6514B /* WKClassicTypeExtension.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -418,6 +428,7 @@
 		};
 		1DEB91AE08733DA50010E9CD /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 91FD8D630F53F89F00A6514B /* WiimoteKit.xcconfig */;
 			buildSettings = {
 				COPY_PHASE_STRIP = NO;
 				DYLIB_COMPATIBILITY_VERSION = 1;
@@ -439,6 +450,7 @@
 		};
 		1DEB91AF08733DA50010E9CD /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 91FD8D630F53F89F00A6514B /* WiimoteKit.xcconfig */;
 			buildSettings = {
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DYLIB_COMPATIBILITY_VERSION = 1;

@@ -39,7 +39,11 @@ user_addr_t __WiiRemoteTranslateAddress(user_addr_t address, WKAddressSpace spac
 
 - (IOReturn)sendCommand:(const uint8_t *)cmd length:(size_t)length {
 	NSParameterAssert(length <= 22);
-	if (!wk_wiiFlags.connected) @throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"cannot send data with a disconnected wiimote" userInfo:nil];
+	// cam: it is not safe to send data to the wiimote as long as the control channel
+	// is not opened.  This happens sometimes when a wiimote is connected with an
+	// extension already plugged-in.
+	// don't forbid the execution of this method, the command will be queued anyway.
+//	NSAssert (wk_wiiFlags.connected, @"cannot send data with a disconnected wiimote");
 	
 	uint8_t buffer[23];
 	bzero(buffer, 23);
@@ -47,9 +51,9 @@ user_addr_t __WiiRemoteTranslateAddress(user_addr_t address, WKAddressSpace spac
 	buffer[0] = 0x52; /* magic number (HID spec) */
 	memcpy(buffer + 1, cmd, length);
 	if ([self isRumbleEnabled]) buffer[2] |= 1; // rumble bit must be set in all control report.
-	
-	WKLog(@"=> Send command %#x (cmd[1]: %#x,  cmd[2]: %#x)", cmd[0], length > 1 ? cmd[1] : 0, length > 2 ? cmd[2] : 0);
-	return [[self connection] sendData:buffer length:length + 1 context:nil];
+
+	WKLog(@"=> send command %#x (cmd[1]: %#x,  cmd[2]: %#x)", cmd[0], length > 1 ? cmd[1] : 0, length > 2 ? cmd[2] : 0);
+	return [[self connection] sendData:buffer length:(length + 1) context:nil];
 }
 
 - (IOReturn)readDataAtAddress:(user_addr_t)address space:(WKAddressSpace)space length:(size_t)length handler:(SEL)handler {
@@ -61,11 +65,15 @@ user_addr_t __WiiRemoteTranslateAddress(user_addr_t address, WKAddressSpace spac
 	OSWriteBigInt32(buffer, 1, __WiiRemoteTranslateAddress(address, space));
 	OSWriteBigInt16(buffer, 5, length);
 	
-	IOReturn err = [self sendCommand:buffer length:7];
+	IOReturn err = [self sendCommand:buffer length:sizeof(buffer)];
 	if (kIOReturnSuccess == err) {
+		// set the length of expect data to be received
+		wk_wiiFlags.expected = length;
+
 		// null array callback is what we need for integer array
 		if (!wk_rRequests) wk_rRequests = CFArrayCreateMutable(kCFAllocatorDefault, 0, NULL);
 		CFArrayAppendValue(wk_rRequests, handler);
+		WKLog (@"read request queued");
 	}
 	return err;
 }
@@ -100,37 +108,51 @@ user_addr_t __WiiRemoteTranslateAddress(user_addr_t address, WKAddressSpace spac
 }
 
 #pragma mark Extension
+
 - (IOReturn)initializeExtension {
 	if (!wk_wiiFlags.extInit) {
 		wk_wiiFlags.extInit = 1;
-		return [self writeData:(const uint8_t []){ 0x00 } length:1 atAddress:EXTENSION_REGISTER_STATUS 
-										 space:kWKMemorySpaceExtension next:@selector(didInitializeExtension:)];
+		return [self writeData:(const uint8_t []){ 0x55 } length:1 atAddress:EXTENSION_REGISTER_STATUS
+	space:kWKMemorySpaceExtension next:@selector(didInitializeExtension0:)];
 	}
 	return kIOReturnSuccess;
 }
+
+- (void)didInitializeExtension0:(NSUInteger)status {
+	[self writeData:(const uint8_t []){ 0x00 } length:1 atAddress:EXTENSION_REGISTER_STATUS2 
+space:kWKMemorySpaceExtension next:@selector(didInitializeExtension:)];
+}
+
 - (void)didInitializeExtension:(NSUInteger)status {
 	// don't know what the param status contains (see 0x22 report for details) ?
-	[self readDataAtAddress:EXTENSION_REGISTER_TYPE space:kWKMemorySpaceExtension length:2 handler:@selector(handleExtensionType:length:)]; // read expansion device type	
+	
+	// read expansion device type
+	[self readDataAtAddress:EXTENSION_REGISTER_TYPE space:kWKMemorySpaceExtension length:8 handler:@selector(handleExtensionType:length:)];
 }
 
 - (void)handleExtensionType:(const uint8_t *)data length:(size_t)length {
-	NSParameterAssert(length == 2);
-	uint16_t wiitype = OSReadBigInt16(data, 0);
+	NSParameterAssert(length == 8);
+	uint16_t wiitype0 =  OSReadBigInt(data, 0) >> 16;
+	uint32_t wiitype1 =  OSReadBigInt32(data, 2);
 	WKExtensionType type = kWKExtensionNone;
 	/* set extension type */
-	switch (wiitype) {
-		case 0xfefe:
-			type = kWKExtensionNunchuk;
-			break;
-		case 0xfdfd:
-			type = kWKExtensionClassicController;
-			break;
-		case 0xffff:
-			WKLog(@"TODO: report extension error: unplug and try again");
-			// maybe we should retry
-			break;
-		default:
-			WKLog(@"TODO: report unsupported extension");
+	switch (wiitype0) {
+		case EXTENSION_IDENTIFIER_TYPE0:
+			switch (wiitype1) {
+				case EXTENSION_IDENTIFIER_PARTIAL:
+					WKLog(@"TODO: report extension error: unplug and try again");
+					// maybe we should retry
+					break;
+				case EXTENSION_IDENTIFIER_NUNCHUK:
+					type = kWKExtensionNunchuk;
+					break;
+				case EXTENSION_IDENTIFIER_CLASSIC:
+					type = kWKExtensionClassicController;
+					break;
+				default:
+					WKLog(@"TODO: report unsupported extension");
+					break;
+			}
 			break;
 	}
 	[self setExtensionType:type];
@@ -150,9 +172,9 @@ user_addr_t __WiiRemoteTranslateAddress(user_addr_t address, WKAddressSpace spac
 
 - (void)setExtensionType:(WKExtensionType)type {
 	if ([wk_extension type] != type) {
-		if (type != kWKExtensionNone)
+		if (type != kWKExtensionNone) {
 			[self setExtension:[WKExtension extensionWithType:type]];
-		else
+		} else
 			[self setExtension:nil];
 		
 		if ([self irMode] != kWKIRModeOff) {
@@ -186,12 +208,12 @@ user_addr_t __WiiRemoteTranslateAddress(user_addr_t address, WKAddressSpace spac
 
 
 #pragma mark Refresh
-- (IOReturn)refreshStatus {
+- (IOReturn) refreshStatus {
 	if (wk_wiiFlags.inTransaction) {
-	  wk_wiiFlags.status = 1;
+		wk_wiiFlags.status = 1;
 		return kIOReturnSuccess;
 	} else {
-		uint8_t cmd[] = {0x15, 0x00};
+		uint8_t cmd[] = {WKOutputReportStatus, 0x00};
 		return [self sendCommand:cmd length:2];
 	}
 }
@@ -202,22 +224,31 @@ user_addr_t __WiiRemoteTranslateAddress(user_addr_t address, WKAddressSpace spac
 		wk_wiiFlags.reportMode = 1;
 	} else {
 		/* update report mode */
-		uint8_t cmd[] = {WKOutputReportMode, 0x02, 0x30}; // Just buttons.
+		uint8_t cmd[] = {WKOutputReportMode, 0x02, kWKInputReportDefault}; // Just buttons.
 		
 		if (wk_wiiFlags.continuous) cmd[1] = 0x04;
 		
 		/* wiimote accelerometer */
 		if (wk_wiiFlags.accelerometer) {
-			if (wk_extension && wk_irMode != kWKIRModeOff) {
-				cmd[2] = kWKInputReportAll;
-			} else if (wk_extension && wk_wiiFlags.extension) {
-				cmd[2] = kWKInputReportAccelerometerExtension;
-			} else {
-				cmd[2] = kWKInputReportAccelerometer;
+			if (wk_extension && wk_wiiFlags.extension) {
+				if (wk_irMode != kWKIRModeOff && [wk_extension acceptsIRCameraEvents]) {
+					cmd[2] = kWKInputReportAll;
+				} else { // extension but no ir
+					cmd[2] = kWKInputReportAccelerometerExtension;
+				}
+			} else { // no extension
+				if (wk_irMode != kWKIRModeOff) { // accel + ir
+					cmd[2] = kWKInputReportAccelerometerIR;
+				} else { // only accelerometers
+					cmd[2] = kWKInputReportAccelerometer;
+				}				
 			}
 		} else if (wk_irMode != kWKIRModeOff) {
 			if (wk_extension && wk_wiiFlags.extension) {
-				cmd[2] = kWKInputReportIRExtension;
+				if ([wk_extension acceptsIRCameraEvents])
+					cmd[2] = kWKInputReportIRExtension;
+				else
+					cmd[2] = kWKInputReportExtension;
 			} else {
 				/* IR only does not exists (and does not have sense) */
 				cmd[2] = kWKInputReportAccelerometerIR;
@@ -235,12 +266,12 @@ user_addr_t __WiiRemoteTranslateAddress(user_addr_t address, WKAddressSpace spac
 }
 - (void)handleCalibration:(const uint8_t *)data length:(size_t)length {
 #if defined(NINE_BITS_ACCELEROMETER)
-	wk_accCalib.x0 = data[0] << 1;
-	wk_accCalib.y0 = data[1] << 1;
-	wk_accCalib.z0 = data[2] << 1;
-	wk_accCalib.xG = data[4] << 1;
-	wk_accCalib.yG = data[5] << 1;
-	wk_accCalib.zG = data[6] << 1;
+	wk_accCalib.x0 = (data[0] << 2);
+	wk_accCalib.y0 = (data[1] << 2);
+	wk_accCalib.z0 = (data[2] << 2);
+	wk_accCalib.xG = (data[4] << 2);
+	wk_accCalib.yG = (data[5] << 2);
+	wk_accCalib.zG = (data[6] << 2);
 #else
 	wk_accCalib.x0 = data[0];
 	wk_accCalib.y0 = data[1];
@@ -254,14 +285,14 @@ user_addr_t __WiiRemoteTranslateAddress(user_addr_t address, WKAddressSpace spac
 - (IOReturn)refreshExtensionCalibration {
 	size_t length = [[self extension] calibrationLength];
 	user_addr_t addr = [[self extension] calibrationAddress];
-	if (addr == 0 || length == 0) return kIOReturnSuccess;
+	if (addr == 0 || length == 0)
+		return kIOReturnSuccess;
 	
-	return [self readDataAtAddress:addr space:kWKMemorySpaceExtension 
-													length:length handler:@selector(handleExtensionCalibration:length:)];
+	return [self readDataAtAddress:addr space:kWKMemorySpaceExtension length:length handler:@selector(handleExtensionCalibration:length:)];
 }
 
 - (void)handleExtensionCalibration:(const uint8_t *)data length:(size_t)length {
-	[[self extension] parseCalibration:data length:length];
+	return [[self extension] parseCalibration:data length:length];
 }
 
 #pragma mark IR Camera
@@ -366,15 +397,18 @@ user_addr_t __WiiRemoteTranslateAddress(user_addr_t address, WKAddressSpace spac
 	WKEvent *event = [WKEvent eventWithType:kWKEventIRCamera wiimote:self source:source];
 	WKIRPoint *points[4];
 	bzero(points, sizeof(points));
-	for (NSUInteger idx = 0; idx < 4; idx++) {
+	NSUInteger idx = 0;
+	for (idx = 0; idx < 4; idx++) {
 		if (data->points[idx].exists) {
 			points[idx] = [[WKIRPoint alloc] initWithSize:data->points[idx].size 
-																					absoluteX:data->points[idx].rawx
-																					absoluteY:data->points[idx].rawy];
+												absoluteX:data->points[idx].rawx
+												absoluteY:data->points[idx].rawy];
 			[points[idx] autorelease];
 		}
 	}
 	[event setPoints:points count:4];
+	[event setX:data->x];
+	[event setY:data->y];
 	[self sendEvent:event];
 }
 
@@ -412,7 +446,6 @@ user_addr_t __WiiRemoteTranslateAddress(user_addr_t address, WKAddressSpace spac
 
 - (void)sendAccelerometerEvent:(WKAccelerometerEventData *)data source:(WKEventSource)source {
 	WKEvent *event = [WKEvent eventWithType:kWKEventAccelerometer wiimote:self source:source];
-	
 
 	[event setX:data->x];
 	[event setY:data->y];

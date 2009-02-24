@@ -80,6 +80,8 @@ typedef NSUInteger WKIRMode;
 		unsigned int leds:5; // Current state of LEDs
 		unsigned int rumble:1; // Current state of the force feedback
 		unsigned int battery:8; // Current battery level
+		int leftidx:8; // index of left IR point
+		unsigned int orientation:8; // orientation of wiimote
 		
 		/* speaker */
 		unsigned int muted:1; // speaker is enabled ?
@@ -184,10 +186,11 @@ typedef NSUInteger WKIRMode;
 @class WKEvent;
 @interface NSObject (WiiRemoteDelegate)
 
-- (void)wiimoteDidConnect:(WiiRemote *)aRemote;
-- (void)wiimoteDidDisconnect:(WiiRemote *)aRemote;
+- (void) wiimoteDidConnect:(WiiRemote *)aRemote;
+- (void) wiimoteDidDisconnect:(WiiRemote *)aRemote;
 
-- (void)wiimote:(WiiRemote *)aRemote sendEvent:(WKEvent *)anEvent;
+- (void) wiimote:(WiiRemote *)aRemote sendEvent:(WKEvent *)anEvent;
+- (void) wiimoteDidInterpretReport:(WiiRemote *)aRemote;
 
 - (OSStatus)getAudioFormat:(AudioStreamBasicDescription *)format;
 

@@ -24,7 +24,7 @@
 			break;
 		case kWKExtensionClassicController:
 			cls = [WiiClassic class];
-			break;			
+			break;
 	}
 	return [[[cls alloc] initWithType:aType] autorelease];
 }
@@ -47,6 +47,17 @@
 - (WKExtensionType)type { return 0; }
 - (size_t)calibrationLength { return 0; }
 - (user_addr_t)calibrationAddress { return 0; }
+
+#pragma mark Wiimote Capabilities
+- (BOOL) acceptsAccelerometerEvents
+{
+	return YES;
+}
+
+- (BOOL) acceptsIRCameraEvents
+{
+	return YES;
+}
 
 - (void)parseStatus:(const uint8_t *)data range:(NSRange)aRange {}
 - (void)parseCalibration:(const uint8_t *)data length:(size_t)length {}

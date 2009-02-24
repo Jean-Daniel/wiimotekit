@@ -21,7 +21,7 @@
 	const uint8_t *memory = data + aRange.location;
 	
 	/* C and Z */
-	uint8_t buttons = WII_DECRYPT(memory[5]);
+	uint8_t buttons = memory[5];
 	bool button = (buttons & 0x02) == 0;
 	if (wk_wnFlags.c != button) {
 		wk_wnFlags.c = button;
@@ -36,8 +36,8 @@
 	
 	/* Joystick */
 	uint8_t rawx, rawy;
-	rawx = WII_DECRYPT(memory[0]);
-	rawy = WII_DECRYPT(memory[1]);
+	rawx = memory[0];
+	rawy = memory[1];
 	if (rawx != wk_rawX || rawy != wk_rawY) {
 		WKJoystickEventData event;
 		bzero(&event, sizeof(event));
@@ -69,27 +69,27 @@
 	WKAccelerometerEventData event;
 	bzero(&event, sizeof(event));
 	/* position */
-	event.rawx = WII_DECRYPT(memory[2]);
-	event.rawy = WII_DECRYPT(memory[3]);
-	event.rawz = WII_DECRYPT(memory[4]);
+	event.rawx = memory[2];
+	event.rawy = memory[3];
+	event.rawz = memory[4];
 	if (event.rawx != wk_acc.rawX || event.rawy != wk_acc.rawY || event.rawz != wk_acc.rawZ) {
 		
 		/* delta */
 		event.rawdx = event.rawx - wk_acc.rawX;
 		event.rawdy = event.rawy - wk_acc.rawY;
 		event.rawdz = event.rawz - wk_acc.rawZ;		
-		
+
 		/* compute calibrated values */
 		if (wk_calib.acc.x0) {
-			event.x = ((CGFloat)event.rawx - wk_calib.acc.x0) / (wk_calib.acc.xG - wk_calib.acc.x0);
+			event.x = ((CGFloat)event.rawx - wk_calib.acc.x0) / SCALE_MAX_GRAVITY (wk_calib.acc.xG - wk_calib.acc.x0);
 			event.dx = event.x - wk_acc.x;
 		}
 		if (wk_calib.acc.y0) {
-			event.y = ((CGFloat)event.rawy - wk_calib.acc.y0) / (wk_calib.acc.yG - wk_calib.acc.y0);
+			event.y = ((CGFloat)event.rawy - wk_calib.acc.y0) / SCALE_MAX_GRAVITY (wk_calib.acc.yG - wk_calib.acc.y0);
 			event.dy = event.y - wk_acc.y;
 		}
 		if (wk_calib.acc.z0) {
-			event.z = ((CGFloat)event.rawz - wk_calib.acc.z0) / (wk_calib.acc.zG - wk_calib.acc.z0);
+			event.z = ((CGFloat)event.rawz - wk_calib.acc.z0) / SCALE_MAX_GRAVITY (wk_calib.acc.zG - wk_calib.acc.z0);
 			event.dz = event.z - wk_acc.z;
 		}
 		
@@ -106,19 +106,19 @@
 }
 
 - (void)parseCalibration:(const uint8_t *)memory length:(size_t)length {
-	wk_calib.acc.x0 = WII_DECRYPT(memory[0]);
-	wk_calib.acc.y0 = WII_DECRYPT(memory[1]);
-	wk_calib.acc.z0 = WII_DECRYPT(memory[2]);
-	wk_calib.acc.xG = WII_DECRYPT(memory[4]);
-	wk_calib.acc.yG = WII_DECRYPT(memory[5]);
-	wk_calib.acc.zG = WII_DECRYPT(memory[6]);
+	wk_calib.acc.x0 = memory[0];
+	wk_calib.acc.y0 = memory[1];
+	wk_calib.acc.z0 = memory[2];
+	wk_calib.acc.xG = memory[4];
+	wk_calib.acc.yG = memory[5];
+	wk_calib.acc.zG = memory[6];
 	
-	wk_calib.x.max    = WII_DECRYPT(memory[8]);
-	wk_calib.x.min    = WII_DECRYPT(memory[9]);
-	wk_calib.x.center = WII_DECRYPT(memory[10]);
-	wk_calib.y.max    = WII_DECRYPT(memory[11]);
-	wk_calib.y.min    = WII_DECRYPT(memory[12]);
-	wk_calib.y.center = WII_DECRYPT(memory[13]);
+	wk_calib.x.max    = memory[8];
+	wk_calib.x.min    = memory[9];
+	wk_calib.x.center = memory[10];
+	wk_calib.y.max    = memory[11];
+	wk_calib.y.min    = memory[12];
+	wk_calib.y.center = memory[13];
 }
 
 #pragma mark Calibration

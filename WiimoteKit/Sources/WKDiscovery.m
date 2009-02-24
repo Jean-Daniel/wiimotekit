@@ -92,7 +92,8 @@ NSString * const WKDeviceRegistryFoundDeviceKey = @"WKDeviceRegistryFoundDeviceK
 		bool wiimote = false;
 		if ([device getLastServicesUpdate]) {
 			NSArray *services = [device getServices];
-			for (NSUInteger idx = 0; idx < [services count] && !wiimote; idx++) {
+			NSUInteger idx = 0;
+			for (idx = 0; idx < [services count] && !wiimote; idx++) {
 				IOBluetoothSDPServiceRecord *record = [services objectAtIndex:idx];
 				NSDictionary *attrs = [record getAttributes];
 				IOBluetoothSDPDataElement *vendor = [attrs objectForKey:[NSNumber numberWithLong:kBluetoothSDPAttributeDeviceIdentifierVendorID]];

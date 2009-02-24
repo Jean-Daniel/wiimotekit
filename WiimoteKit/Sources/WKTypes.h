@@ -36,9 +36,9 @@
  @constant kWKExtensionClassicController Classic Controller extension
  */
 enum {
-	kWKExtensionNone              = 0,
-	kWKExtensionNunchuk           = 1,
-	kWKExtensionClassicController	= 2
+	kWKExtensionNone				= 0,
+	kWKExtensionNunchuk				= 1,
+	kWKExtensionClassicController	= 2,
 };
 typedef NSUInteger WKExtensionType;
 
@@ -66,7 +66,8 @@ typedef struct _WKButtonCalibration {
  @field z Normalized accelerometer data.  Values range between 0 - ? 
  */
 typedef struct _WKAccelerationState {
-	uint8_t rawX, rawY, rawZ;
+	uint16_t rawX, rawY, rawZ;
+	CGFloat lowX, lowZ;
 	CGFloat x, y, z;
 } WKAccelerationState;
 
@@ -81,7 +82,7 @@ typedef struct _WKAccelerationState {
  @field zG Gravity at rest of accelerometer
  */
 typedef struct _WKAccelerationCalibration {
-	uint8_t x0, y0, z0;
-	uint8_t xG, yG, zG;
+	// cam: changed from uint8_t to uint16_t to allow for 9 bits acceleration resolution
+	uint16_t x0, y0, z0;
+	uint16_t xG, yG, zG;
 } WKAccelerationCalibration;
-

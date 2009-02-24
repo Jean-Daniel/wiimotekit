@@ -7,6 +7,7 @@
 //
 
 #import <WiimoteKit/WKExtension.h>
+#import <WiimoteKit/WKClassicTypeExtension.h>
 
 /*!
  @struct
@@ -45,12 +46,9 @@ enum {
 	
 	kWKClassicButtonsMask  = 0xfeff,
 };
-typedef NSUInteger WKClassicButtonsState;
 
-@interface WiiClassic : WKExtension {
+@interface WiiClassic : WKClassicTypeExtension {
 @private
-	// Current button state
-	WKClassicButtonsState wk_buttons;
 	// Calibration data for Classic Controller extension
 	WKClassicControllerCalibration wk_calib;
 	

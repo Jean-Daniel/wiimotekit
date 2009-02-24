@@ -27,9 +27,9 @@ enum {
 typedef NSUInteger WKEventType;
 
 enum {
-	kWKEventSourceWiiRemote = kWKExtensionNone,
-	kWKEventSourceNunchuk   = kWKExtensionNunchuk,
-	kWKEventSourceClassic   = kWKExtensionClassicController,
+	kWKEventSourceWiiRemote 	= kWKExtensionNone,
+	kWKEventSourceNunchuk   	= kWKExtensionNunchuk,
+	kWKEventSourceClassic   	= kWKExtensionClassicController,
 };
 typedef NSUInteger WKEventSource;
 
@@ -52,7 +52,6 @@ enum {
 	kWKEventAnalogLeftButton = 1,
 	kWKEventAnalogRightButton,
 };
-
 typedef NSUInteger WKEventSubtype;
 
 @class WKIRPoint, WiiRemote;
@@ -91,6 +90,8 @@ typedef NSUInteger WKEventSubtype;
 		} joystick;
 		struct {
 			WKIRPoint *points[4];
+			CGFloat x;
+			CGFloat y;
 		} ir;
 	} wk_data;
 }
@@ -176,5 +177,3 @@ typedef NSUInteger WKEventSubtype;
 - (void)setPoints:(WKIRPoint **)points count:(NSUInteger)count;
 
 @end
-
-
