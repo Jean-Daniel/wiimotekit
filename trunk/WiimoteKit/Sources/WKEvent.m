@@ -72,7 +72,7 @@
 			return YES;
 		case kWKEventJoystickMove:
 		case kWKEventAnalogButtonChange:
-			return wk_source == kWKEventSourceClassic;
+			return  (wk_source == kWKEventSourceClassic);
 	}
 	return NO;
 }
@@ -163,6 +163,8 @@
 			return wk_data.joystick.x;
 		case kWKEventAnalogButtonChange:
 			return wk_data.analog.x;
+		case kWKEventIRCamera:
+			return wk_data.ir.x;
 		default:
 			@throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"Event does not support X" userInfo:nil];
 	}
@@ -178,6 +180,9 @@
 		case kWKEventAnalogButtonChange:
 			wk_data.analog.x = value;
 			break;
+		case kWKEventIRCamera:
+			wk_data.ir.x = value;
+			break;
 		default:
 			@throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"Event does not support X" userInfo:nil];
 	}
@@ -189,6 +194,8 @@
 			return wk_data.acc.y;
 		case kWKEventJoystickMove:
 			return wk_data.joystick.y;
+		case kWKEventIRCamera:
+			return wk_data.ir.y;
 		default:
 			@throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"Event does not support Y" userInfo:nil];
 	}
@@ -200,6 +207,9 @@
 			break;
 		case kWKEventJoystickMove:
 			wk_data.joystick.y = value;
+			break;
+		case kWKEventIRCamera:
+			wk_data.ir.y = value;
 			break;
 		default:
 			@throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"Event does not support Y" userInfo:nil];

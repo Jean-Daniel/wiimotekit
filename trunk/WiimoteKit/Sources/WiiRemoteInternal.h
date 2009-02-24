@@ -19,17 +19,28 @@ enum {
 } ;
 typedef NSUInteger WKAddressSpace;
 
+// Maximum acceleration tolerated by the Wiimote accerelometers
+#if defined(SCALED_ACCELERATIONS)
+#	define SCALE_MAX_GRAVITY(a) (5.0 * (a))
+#else
+#	define SCALE_MAX_GRAVITY(a) (a)
+#endif
+
 // Wiimote registers (relative to respective address range)
 #define IR_REGISTER_STATUS              0x30
 #define IR_REGISTER_SENSITIVITY_1       0x00
 #define IR_REGISTER_SENSITIVITY_2       0x1a
 #define IR_REGISTER_MODE                0x33
 
-#define EXTENSION_REGISTER_STATUS       0x40
-#define EXTENSION_REGISTER_TYPE         0xfe
+#define EXTENSION_REGISTER_STATUS   	0xf0
+#define EXTENSION_REGISTER_STATUS2		0xfb
+#define EXTENSION_REGISTER_TYPE         0xfa
 #define EXTENSION_REGISTER_CALIBRATION  0x20
 
-#define WII_DECRYPT(data) (((data ^ 0x17) + 0x17) & 0xFF)
+#define EXTENSION_IDENTIFIER_TYPE0		0x0000
+#define EXTENSION_IDENTIFIER_PARTIAL	0xFFFF
+#define EXTENSION_IDENTIFIER_NUNCHUK	0xa4200000
+#define EXTENSION_IDENTIFIER_CLASSIC	0xa4200101
 
 // Wiimote output commands
 enum WKOutputReport {
@@ -105,6 +116,7 @@ typedef struct {
 		uint8_t size;
 		uint16_t rawx, rawy;
 	} points[4];
+	CGFloat x, y;
 } WKIREventData;
 
 typedef struct {

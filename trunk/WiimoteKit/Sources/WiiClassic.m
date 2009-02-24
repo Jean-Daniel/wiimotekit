@@ -11,38 +11,29 @@
 
 @implementation WiiClassic
 
-- (WKExtensionType)type {
+- (WKExtensionType) type
+{
 	return kWKExtensionClassicController;
 }
 
-- (void)parseStatus:(const uint8_t *)data range:(NSRange)aRange {
-	NSParameterAssert(aRange.length >= 6);
-	
-	WKClassicButtonsState buttons = ((WII_DECRYPT(data[4]) << 8) + WII_DECRYPT(data[5]));
-	/* stats is negative, so use ~buttons */
-	buttons = ~buttons & kWKClassicButtonsMask;
-	if (buttons != wk_buttons) {
-		for (NSUInteger idx = 0; idx < 16; idx++) {
-			NSUInteger flag = 1 << idx;
-			if (flag & kWKClassicButtonsMask) {
-				/* xor */
-				bool before = wk_buttons & flag;
-				bool after = buttons & flag;
-				if ((before && !after) || (!before && after)) {
-					[[self wiiRemote] sendButtonEvent:flag source:kWKEventSourceClassic down:before];
-				}
-			}
-		}
-		wk_buttons = buttons;
-	}
-	
-	uint8_t tmp[] = { WII_DECRYPT(data[0]), WII_DECRYPT(data[1]), WII_DECRYPT(data[2]) };
-	
+- (WKEventSource) source
+{
+	return kWKEventSourceClassic;
+}
+
+- (const WKClassicButtonsState) buttonsMask
+{
+	return kWKClassicButtonsMask;
+}
+
+- (void) parseSpecific:(const uint8_t *) data
+{
 	WKJoystickEventData event;
 	bzero(&event, sizeof(event));
+
 	/* left joystick */
-	event.rawx = tmp[0] & 0x3f;
-	event.rawy = tmp[1] & 0x3f;
+	event.rawx = data[0] & 0x3f;
+	event.rawy = data[1] & 0x3f;
 	if (event.rawx != wk_rawXL || event.rawy != wk_rawYL) {
 		event.rawdx = event.rawx - wk_rawXL;
 		event.rawdy = event.rawy - wk_rawYL;
@@ -62,12 +53,14 @@
 		wk_rawXL = event.rawx;
 		wk_rawYL = event.rawy;
 		
-		[[self wiiRemote] sendJoystickEvent:&event source:kWKEventSourceClassic subtype:kWKEventRightJoystick];
+		[[self wiiRemote] sendJoystickEvent:&event
+									 source:[self source]
+									subtype:kWKEventLeftJoystick];
 	}
 	
 	/* right joystick */
-	event.rawx = (((tmp[0] & 0xc0) >> 3) | ((tmp[1] & 0xc0) >> 5) | ((tmp[2] & 0x80) >> 7)) & 0x1f;
-	event.rawy = tmp[2] & 0x1f;
+	event.rawx = (((data[0] & 0xc0) >> 3) | ((data[1] & 0xc0) >> 5) | ((data[2] & 0x80) >> 7)) & 0x1f;
+	event.rawy = data[2] & 0x1f;
 	if (event.rawx != wk_rawXR || event.rawy != wk_rawYR) {
 		event.rawdx = event.rawx - wk_rawXL;
 		event.rawdy = event.rawy - wk_rawYL;
@@ -87,12 +80,14 @@
 		wk_rawXR = event.rawx;
 		wk_rawYR = event.rawy;
 		
-		[[self wiiRemote] sendJoystickEvent:&event source:kWKEventSourceClassic subtype:kWKEventRightJoystick];
+		[[self wiiRemote] sendJoystickEvent:&event
+									 source:[self source]
+									subtype:kWKEventRightJoystick];
 	}
 	
 	/* L and R */
 	uint8_t value;			
-	value = (((tmp[2] & 0x60) >> 2) | (tmp[3] >> 5)) & 0x1f;
+	value = (((data[2] & 0x60) >> 2) | ((data[3] & 0xe0) >> 5)) & 0x1f;
 	if (value != wk_rawTL) {
 		WKAnalogEventData event;
 		bzero(&event, sizeof(event));
@@ -109,10 +104,12 @@
 		wk_tl = event.x;
 		wk_rawTL = event.rawx;
 		
-		[[self wiiRemote] sendAnalogEvent:&event source:kWKEventSourceClassic subtype:kWKEventAnalogLeftButton];
+		[[self wiiRemote] sendAnalogEvent:&event
+								   source:[self source]
+								  subtype:kWKEventAnalogLeftButton];
 	}
 	
-	value = tmp[3] & 0x1f;
+	value = data[3] & 0x1f;
 	if (value != wk_rawTR) {
 		WKAnalogEventData event;
 		bzero(&event, sizeof(event));
@@ -129,46 +126,40 @@
 		wk_tr = event.x;
 		wk_rawTR = event.rawx;
 		
-		[[self wiiRemote] sendAnalogEvent:&event source:kWKEventSourceClassic subtype:kWKEventAnalogRightButton];
+		[[self wiiRemote] sendAnalogEvent:&event
+								   source:[self source]
+								  subtype:kWKEventAnalogRightButton];
 	}
 }
 
-- (void)parseCalibration:(const uint8_t *)memory length:(size_t)length {
+- (void) parseCalibration:(const uint8_t *) memory length:(size_t) length
+{
 	// classic controller calibration data
-	wk_calib.xl.max    = WII_DECRYPT(memory[0]) >> 2;
-	wk_calib.xl.min    = WII_DECRYPT(memory[1]) >> 2;
-	wk_calib.xl.center = WII_DECRYPT(memory[2]) >> 2;
+	wk_calib.xl.max    = memory[0] >> 2;
+	wk_calib.xl.min    = memory[1] >> 2;
+	wk_calib.xl.center = memory[2] >> 2;
 	
-	wk_calib.yl.max    = WII_DECRYPT(memory[3]) >> 2;
-	wk_calib.yl.min    = WII_DECRYPT(memory[4]) >> 2;
-	wk_calib.yl.center = WII_DECRYPT(memory[5]) >> 2;
+	wk_calib.yl.max    = memory[3] >> 2;
+	wk_calib.yl.min    = memory[4] >> 2;
+	wk_calib.yl.center = memory[5] >> 2;
 	
-	wk_calib.xr.max    = WII_DECRYPT(memory[6]) >> 3;
-	wk_calib.xr.min    = WII_DECRYPT(memory[7]) >> 3;
-	wk_calib.xr.center = WII_DECRYPT(memory[8]) >> 3;
+	wk_calib.xr.max    = memory[6] >> 3;
+	wk_calib.xr.min    = memory[7] >> 3;
+	wk_calib.xr.center = memory[8] >> 3;
 	
-	wk_calib.yr.max    = WII_DECRYPT(memory[9])  >> 3;
-	wk_calib.yr.min    = WII_DECRYPT(memory[10]) >> 3;
-	wk_calib.yr.center = WII_DECRYPT(memory[11]) >> 3;
+	wk_calib.yr.max    = memory[9]  >> 3;
+	wk_calib.yr.min    = memory[10] >> 3;
+	wk_calib.yr.center = memory[11] >> 3;
 	
 	// this doesn't seem right...
-	//			wk_calib.tl.max = WII_DECRYPT(memory[12]) >> 3;
-	//			wk_calib.tl.min = WII_DECRYPT(memory[13]) >> 3;
-	//			wk_calib.tr.max = WII_DECRYPT(memory[14]) >> 3;
-	//			wk_calib.tr.min = WII_DECRYPT(memory[15]) >> 3;
+	//			wk_calib.tl.max = memory[12] >> 3;
+	//			wk_calib.tl.min = memory[13] >> 3;
+	//			wk_calib.tr.max = memory[14] >> 3;
+	//			wk_calib.tr.min = memory[15] >> 3;
 	wk_calib.tl.max = 31;
 	wk_calib.tl.min = 0;
 	wk_calib.tr.max = 31;
 	wk_calib.tr.min = 0;
-}
-
-#pragma mark Calibration
-- (size_t)calibrationLength {
-	return 16;
-}
-
-- (user_addr_t)calibrationAddress {
-	return EXTENSION_REGISTER_CALIBRATION;
 }
 
 @end

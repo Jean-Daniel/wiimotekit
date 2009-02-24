@@ -18,8 +18,14 @@
 
 - (id)initWithDevice:(IOBluetoothDevice *)aDevice {
 	if (self = [super init]) {
+		wk_wiiFlags.leftidx = -1;
 		wk_connection = [[WKConnection alloc] initWithDevice:aDevice];
 		if (!wk_connection) {
+			while (kIOReturnBusy == [aDevice closeConnection]) {
+				NSLog(@"device is busy");
+				[NSThread sleepUntilDate:[NSDate dateWithTimeIntervalSinceNow:1]];
+			}
+			
 			[self release];
 			self = nil;
 		} else {
@@ -68,7 +74,7 @@
 }
 
 - (BOOL)isConnected {
-	return wk_connection != nil;
+	return wk_connection != nil && wk_wiiFlags.connected;
 }
 - (WKConnection *)connection {
 	return wk_connection;
@@ -77,9 +83,12 @@
 - (void)connectionDidOpen:(WKConnection *)aConnection {
 	wk_wiiFlags.connected = 1;
 	/* turn off all leds */
-	[self setLeds:0];
+	//[self setLeds:0];
+
 	/* get status */
+	// status is already asked when setting the leds.
 	[self refreshStatus];
+	
 	/* request wiimote calibration */
 	[self refreshCalibration];
 	
@@ -110,6 +119,17 @@
 
 - (void)setAcceptsIRCameraEvents:(BOOL)flag {
 	IOReturn err = kIOReturnSuccess;
+
+	// Don't set the IR mode if the extension doesn't accepts it
+	if ([self extension] && ![[self extension] acceptsIRCameraEvents]) {
+		// notify the inconsistency (IR mode is already set)
+		if ([self irMode] != kWKIRModeOff) {
+			WKLog (@"*** warning: ir mode already set, but extension forbids use of IR sensor");
+			flag = kWKIRModeOff;
+		} else
+			return;
+	}
+
 	if (!flag && wk_irMode != kWKIRModeOff) {
 		err = [self setIrMode:kWKIRModeOff];
 	} else if (flag && wk_irMode == kWKIRModeOff) {
@@ -136,6 +156,16 @@
 	return wk_wiiFlags.accelerometer;
 }
 - (void)setAcceptsAccelerometerEvents:(BOOL)accept {
+	// Don't turn on the accelerometer if the extension doesn't accepts it
+	if ([self extension] && ![[self extension] acceptsAccelerometerEvents]) {
+		// notify the inconsistency (IR mode is already set)
+		if (wk_wiiFlags.accelerometer) {
+			WKLog (@"*** warning: accelerometer already turned on, but extension forbids use of accelerometer");
+			wk_wiiFlags.accelerometer = NO;
+		} else
+			return;
+	}
+	
 	bool flag = accept ? 1 : 0;
 	if (wk_wiiFlags.accelerometer != flag) {
 		wk_wiiFlags.accelerometer = flag;

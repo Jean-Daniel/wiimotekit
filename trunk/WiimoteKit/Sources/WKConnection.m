@@ -147,10 +147,13 @@ enum {
 - (IOReturn)sendData:(const uint8_t *)data length:(size_t)length context:(void *)ctxt {
 	IOReturn err = kIOReturnSuccess;
 	if (wk_status == kWKConnectionStatusOpened) {
-		err = [wk_control writeAsync:(uint8_t *)data length:length refcon:ctxt];
-		if (kIOReturnSuccess == err && !wk_resend) {
-			//WKLog(@"------------- Backup request");
-			[wk_backup addObject:[_WKRequest requestWithBytes:data length:length context:ctxt]];
+		// provide very simplistic locking for this class
+		@synchronized (self) {
+			err = [wk_control writeAsync:(uint8_t *)data length:length refcon:ctxt];
+			if (kIOReturnSuccess == err && !wk_resend) {
+				//WKLog(@"------------- Backup request");
+				[wk_backup addObject:[_WKRequest requestWithBytes:data length:length context:ctxt]];
+			}
 		}
 	} else {
 		WKLog(@"add pending request");
@@ -181,7 +184,8 @@ enum {
 			if ([wk_backup count] > 0) {
 				wk_resend = YES;
 				WKLog(@"sending losed requests");
-				for (NSUInteger idx = 0; idx < [wk_backup count]; idx++) {
+				NSUInteger idx = 0;
+				for (idx = 0; idx < [/*cam: is this really what we want? : wk_backup*/wk_pending count]; idx++) {
 					_WKRequest *request = [wk_pending objectAtIndex:idx];
 					[self sendData:[request bytes] length:[request length] context:[request context]];
 				}
@@ -192,9 +196,9 @@ enum {
 			if ([wk_pending count] > 0) {
 				WKLog(@"sending pending requests");
 				wk_resend = YES;
-				for (NSUInteger idx = 0; idx < [wk_pending count]; idx++) {
+				NSUInteger idx = 0;
+				for (idx = 0; idx < [wk_pending count]; idx++) {
 					_WKRequest *request = [wk_pending objectAtIndex:idx];
-					
 					if (kIOReturnSuccess == [self sendData:[request bytes] length:[request length] context:[request context]]) {
 						//WKLog(@"------------- Backup request");
 						[wk_backup addObject:request];
@@ -203,11 +207,16 @@ enum {
 				[wk_pending removeAllObjects];
 				wk_resend = NO;
 				wk_retry = 0;
-			} else {
+			}
+			// cam: warning, if we have pending request the delegate may eventually
+			// never be notified of the success of the opening.
+			// for example, in the case an extension is plugged-in when the wiimote
+			// is being connected.
+//			else {
 				if ([wk_delegate respondsToSelector:@selector(connectionDidOpen:)]) {
 					[wk_delegate connectionDidOpen:self];
 				}
-			}
+//			}
 			
 			break;
 		case kBluetoothL2CAPPSMHIDInterrupt:
@@ -219,27 +228,29 @@ enum {
 - (void)l2capChannelData:(IOBluetoothL2CAPChannel*)l2capChannel data:(uint8_t *)dataPointer length:(size_t)dataLength {
 	switch ([l2capChannel getPSM]) {
 		case kBluetoothL2CAPPSMHIDControl:
-			NSAssert([wk_backup count] > 0, @"invalid request backup state");
-			WKLog(@"ack: %d", (int)*dataPointer);
-			if (*dataPointer) {
-				/* error, resend the request */
-				_WKRequest *request = [wk_backup objectAtIndex:0];
-				if ([request retry] >= 3) {
-					WKLog(@"fail 3 times. Remove the request.");
-				} else {
-					wk_resend = YES;
-					if (kIOReturnSuccess == [self sendData:[request bytes] length:[request length] context:[request context]]) {
-						WKLog(@"Request resend (%u).", [request retry]);
-						[wk_backup addObject:request];
-						[request incrementRetry];
+			@synchronized (self) {
+				NSAssert([wk_backup count] > 0, @"invalid request backup state");
+				WKLog(@"ack: %d", (int)*dataPointer);
+				if (*dataPointer) {
+					/* error, resend the request */
+					_WKRequest *request = [wk_backup objectAtIndex:0];
+					if ([request retry] >= 3) {
+						WKLog(@"fail 3 times. Remove the request.");
 					} else {
-						WKLog(@"error while resending request. Discard Request.");
+						wk_resend = YES;
+						if (kIOReturnSuccess == [self sendData:[request bytes] length:[request length] context:[request context]]) {
+							WKLog(@"Request resend (%u).", [request retry]);
+							[wk_backup addObject:request];
+							[request incrementRetry];
+						} else {
+							WKLog(@"error while resending request. Discard Request.");
+						}
+						wk_resend = NO;
 					}
-					wk_resend = NO;
 				}
+				//WKLog(@"------------- Remove request");
+				[wk_backup removeObjectAtIndex:0];
 			}
-			//WKLog(@"------------- Remove request");
-			[wk_backup removeObjectAtIndex:0];
 			break;
 		case kBluetoothL2CAPPSMHIDInterrupt:
 			/* trunk the first byte */

@@ -29,4 +29,8 @@
 - (size_t)calibrationLength;
 - (user_addr_t)calibrationAddress;
 
+#pragma mark Wiimote Capabilities
+- (BOOL) acceptsAccelerometerEvents;
+- (BOOL) acceptsIRCameraEvents;
+
 @end
