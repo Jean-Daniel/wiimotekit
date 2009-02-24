@@ -8,5 +8,11 @@
 
 #include <mach/mach_error.h>
 
+#ifdef WIIMOTEKIT_DEBUG_LOG
 #define WKLog(str, args...) NSLog(str, ##args)
+#else
+#define WKLog(str, args...)
+#define WKPrintIOReturn(result, str) if (kIOReturnSuccess != result) { fprintf(stderr, "%s: %s\n", str, mach_error_string(result)); }
+#endif
+
 #define WKPrintIOReturn(result, str) if (kIOReturnSuccess != result) { fprintf(stderr, "%s: %s\n", str, mach_error_string(result)); }
